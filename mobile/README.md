@@ -1,17 +1,22 @@
-# volunteermap
+# VolunteerMap — Flutter mobile app
 
-A new Flutter project.
+Field companion for surveys, maps, OCR upload, and volunteer matching. It talks to the same FastAPI backend as the Streamlit dashboard.
 
-## Getting Started
+## API base URL
 
-This project is a starting point for a Flutter application.
+By default the app points at `http://127.0.0.1:8000` (see `lib/config/api_config.dart`). For a deployed backend or a physical device, pass your Cloud Run / Vercel URL at build time:
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+flutter run --dart-define=API_BASE_URL=https://your-api.example.com
+flutter build apk --dart-define=API_BASE_URL=https://your-api.example.com
+```
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Commands
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+flutter pub get
+flutter analyze
+flutter test
+```
+
+See the repository root [README.md](../README.md) for full stack setup.

@@ -34,7 +34,17 @@ def _init_firebase():
     """
     global _firestore_db, _using_firestore
 
-    sa_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON", "")
+    sa_path = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH", "").strip()
+    sa_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON", "").strip()
+
+    if sa_path and os.path.isfile(sa_path):
+        try:
+            with open(sa_path, "r", encoding="utf-8") as f:
+                sa_json = f.read()
+        except OSError as e:
+            logger.error("Could not read FIREBASE_SERVICE_ACCOUNT_PATH: %s", e)
+            sa_json = ""
+
     if not sa_json or sa_json.startswith("your_") or sa_json == '{"type":"service_account",...}':
         logger.warning("Firebase credentials not configured. Using in-memory store (demo mode).")
         _using_firestore = False

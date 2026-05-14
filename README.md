@@ -44,10 +44,13 @@ Built as a production-ready solution for the **Google Solution Challenge 2026 �
 └─────────────────────────────────────────────────────────────────┘
 
 Deployment:
-  Backend  →  Google Cloud Run (Docker)
-  Frontend →  Firebase Hosting
-  Database →  Firebase Firestore (real-time)
+  Backend  →  Google Cloud Run (Docker, build from repo root)
+  Frontend →  Streamlit Cloud / self-hosted / Firebase Hosting (static)
+  Mobile    →  Flutter (Android / iOS)
+  Database →  Firebase Firestore (optional; in-memory demo without credentials)
 ```
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for production-oriented detail.
 
 ---
 
@@ -104,40 +107,63 @@ cp .env.example .env
 # Edit .env with your API keys (or leave defaults for demo mode)
 ```
 
-### 3. Create virtual environment and install backend dependencies
+### 3. Create virtual environment and install dependencies
 ```bash
 python3 -m venv venv
-source venv/bin/activate
+source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r backend/requirements.txt
-```
-
-### 4. Install frontend dependencies
-```bash
+pip install -r backend/requirements-dev.txt   # optional: pytest for CI / local tests
 pip install -r frontend/requirements.txt
 ```
 
-### 5. Start the backend server
+### 4. Start the backend server
 ```bash
 cd backend
 uvicorn main:app --reload --port 8000
+# or: python main.py
 ```
 
-### 6. Verify the backend is running
+### 5. Verify the backend is running
 ```bash
 curl http://localhost:8000/health
 # Should return: {"status": "ok"}
 ```
 
-### 7. Start the Streamlit frontend (in a new terminal)
+### 6. Start the Streamlit frontend (in a new terminal)
 ```bash
 cd frontend
 streamlit run app.py
 ```
 
-### 8. Open the dashboard
+### 7. Open the dashboard
 Navigate to `http://localhost:8501` in your browser.
 
 > **💡 Demo Mode:** The app works without any API keys! It uses mock responses for Gemini AI matching and OCR processing, and stores data in-memory instead of Firestore.
+
+### 8. Run backend tests (optional)
+```bash
+cd backend
+pytest -q
+```
+
+### 9. Flutter mobile (optional)
+```bash
+cd mobile
+flutter pub get
+flutter run --dart-define=API_BASE_URL=http://127.0.0.1:8000
+```
+
+---
+
+## 🔒 Production security checklist
+
+| Topic | Recommendation |
+|--------|----------------|
+| Demo login | Set `ENABLE_DEMO_AUTH=false` on any public API; replace with Firebase Auth or your IdP. |
+| CORS | Set `CORS_ORIGINS` to explicit origins (comma-separated). Defaults cover localhost Streamlit + API only. |
+| Secrets | Prefer `FIREBASE_SERVICE_ACCOUNT_PATH` or Secret Manager over pasting JSON into env vars. |
+| Uploads | Tune `MAX_UPLOAD_MB` (default 10) for CSV/OCR endpoints. |
+| CI | GitHub Actions runs `pytest` and `flutter analyze` / `flutter test` on push (see `.github/workflows/ci.yml`). |
 
 ---
 
@@ -163,19 +189,15 @@ Navigate to `http://localhost:8501` in your browser.
 
 ## 🚢 Production Deployment
 
-### One-command deploy:
+### One-command deploy (bash / Linux or WSL)
 ```bash
 chmod +x deploy.sh
 ./deploy.sh
 ```
 
-This script will:
-1. ✅ Check that `gcloud` CLI is installed and authenticated
-2. 🐳 Build the backend Docker image
-3. 📦 Push to Google Container Registry
-4. ☁️ Deploy backend to Cloud Run (Mumbai region)
-5. 🔧 Update frontend config with Cloud Run URL
-6. 🌐 Deploy frontend to Firebase Hosting
+The script builds Docker from the **repository root** (`docker build -f backend/Dockerfile .`), pushes to GCR, deploys Cloud Run with `ENABLE_DEMO_AUTH=false`, writes `frontend/.env`, and runs `firebase deploy --only hosting` when configured.
+
+Review [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) before using raw `.env` values in `gcloud` flags; use Secret Manager for funded production workloads.
 
 ---
 
@@ -188,7 +210,7 @@ This script will:
 | AI Matching | Google Gemini API (gemini-1.5-flash) |
 | OCR | Google Cloud Vision API |
 | Database | Firebase Firestore (real-time) |
-| Authentication | Firebase Authentication |
+| Authentication | Demo login on API (`ENABLE_DEMO_AUTH`); Firebase Auth for client apps (see `firebase/`) |
 | Frontend | Streamlit (Python) + Folium Maps |
 | Deployment | Cloud Run (backend) + Firebase Hosting (frontend) |
 | Environment | python-dotenv for secrets |
@@ -211,19 +233,24 @@ This script will:
 volunteermap/
 ├── backend/
 │   ├── main.py              # FastAPI app — all API endpoints
+│   ├── tests/               # Pytest API smoke tests
 │   ├── ml_pipeline.py       # Urgency scoring + K-Means clustering
 │   ├── gemini_matcher.py    # Gemini API volunteer matching
 │   ├── ocr_processor.py     # Cloud Vision OCR for paper surveys
 │   ├── firebase_client.py   # Firestore read/write helpers
 │   ├── models.py            # Pydantic data models
 │   ├── requirements.txt     # Backend dependencies
-│   └── Dockerfile           # Cloud Run deployment
+│   ├── requirements-dev.txt # pytest (CI / local)
+│   └── Dockerfile           # Cloud Run (build from repo root)
 ├── frontend/
 │   ├── app.py               # Streamlit dashboard
 │   ├── map_component.py     # Map embed helper (Folium)
 │   └── requirements.txt     # Frontend dependencies
+├── mobile/                  # Flutter field app
+├── docs/                    # Architecture + deployment notes
+├── .github/workflows/       # CI (pytest + Flutter)
 ├── data/
-│   └── sample_surveys.json  # 20 sample surveys + 8 volunteers
+│   └── sample_surveys.json  # Sample surveys + volunteers
 ├── firebase/
 │   └── firestore.rules      # Firestore security rules
 ├── .env.example             # Environment variable template

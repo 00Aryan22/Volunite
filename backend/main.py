@@ -18,7 +18,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
 
 # Load environment variables early
@@ -27,10 +27,12 @@ load_dotenv()
 from models import (
     SurveySubmit, Survey, VolunteerRegister, Volunteer,
     MatchResult, ClusterResult, DashboardStats, HealthResponse,
+    LoginCredentials,
 )
 from firebase_client import (
     save_survey, get_all_surveys, save_volunteer,
     get_available_volunteers, save_match_result, load_sample_data,
+    delete_volunteer,
 )
 from ml_pipeline import compute_urgency_score, cluster_needs
 from gemini_matcher import match_volunteers
@@ -42,6 +44,31 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+# Upload limits (bytes)
+_MAX_UPLOAD_MB = float(os.getenv("MAX_UPLOAD_MB", "10"))
+MAX_UPLOAD_BYTES = int(_MAX_UPLOAD_MB * 1024 * 1024)
+
+
+def _parse_cors_origins() -> tuple[list[str], bool]:
+    """
+    Return (origins, allow_credentials).
+
+    Browsers reject allow_origins=['*'] together with allow_credentials=True.
+    Default dev origins include Streamlit and local dashboards.
+    """
+    raw = os.getenv("CORS_ORIGINS", "").strip()
+    if raw == "*":
+        return ["*"], False
+    if raw:
+        origins = [o.strip() for o in raw.split(",") if o.strip()]
+        return origins, True
+    return [
+        "http://localhost:8501",
+        "http://127.0.0.1:8501",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ], True
 
 
 @asynccontextmanager
@@ -77,13 +104,24 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware for frontend access
+
+@app.middleware("http")
+async def security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    return response
+
+
+_cors_origins, _cors_credentials = _parse_cors_origins()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=_cors_origins,
+    allow_credentials=_cors_credentials,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 
@@ -97,33 +135,47 @@ DEMO_ACCOUNTS = {
     "sangli_lead@volunteermap.org": {"pass": "sangli123", "role": "lead", "name": "Sangli Coordinator"},
     "pune_lead@volunteermap.org": {"pass": "pune123", "role": "lead", "name": "Pune Coordinator"},
     "+919999999999": {"pass": "123456", "role": "field", "name": "Field Officer"},
-    "google_demo": {"pass": "google", "role": "admin", "name": "Google User (Demo)"}
+    "google_demo": {"pass": "google", "role": "admin", "name": "Google User (Demo)"},
 }
 
+
+def _demo_auth_enabled() -> bool:
+    return os.getenv("ENABLE_DEMO_AUTH", "true").lower() in ("1", "true", "yes")
+
+
 @app.post("/auth/login", tags=["Auth"])
-async def login(credentials: dict):
+async def login(credentials: LoginCredentials):
     """
     Validate credentials and return user profile.
     Supports email, phone (+91...), or google_demo.
+
+    Set ENABLE_DEMO_AUTH=false in production and use Firebase Auth / your IdP instead.
     """
-    identity = credentials.get("identity")
-    password = credentials.get("password")
-    
+    if not _demo_auth_enabled():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Demo authentication is disabled. Configure your identity provider.",
+        )
+
+    identity = credentials.identity.strip()
+    password = credentials.password
+
     if identity in DEMO_ACCOUNTS and DEMO_ACCOUNTS[identity]["pass"] == password:
         user = DEMO_ACCOUNTS[identity].copy()
         user.pop("pass")
         user["token"] = f"demo_token_{identity}"
         return user
-    
+
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid credentials. Try admin@volunteermap.org / admin123"
+        detail="Invalid credentials.",
     )
+
 
 @app.delete("/volunteers/{volunteer_id}", tags=["Volunteers"])
 async def remove_volunteer(volunteer_id: str):
     """Remove a volunteer profile."""
-    success = firebase_client.delete_volunteer(volunteer_id)
+    success = delete_volunteer(volunteer_id)
     if not success:
         raise HTTPException(status_code=404, detail="Volunteer not found")
     return {"status": "success", "message": "Volunteer deleted"}
@@ -549,7 +601,8 @@ async def upload_csv(file: UploadFile = File(...)):
     Expected CSV columns: district, state, category, description,
     severity, affected_count, latitude, longitude.
     """
-    if not file.filename.endswith(".csv"):
+    fname = (file.filename or "").lower()
+    if not fname.endswith(".csv"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only CSV files are accepted.",
@@ -557,6 +610,11 @@ async def upload_csv(file: UploadFile = File(...)):
 
     try:
         content = await file.read()
+        if len(content) > MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"File too large. Maximum size is {MAX_UPLOAD_BYTES // (1024 * 1024)} MB.",
+            )
         decoded = content.decode("utf-8")
         reader = csv.DictReader(io.StringIO(decoded))
 
@@ -607,7 +665,11 @@ async def ocr_survey(file: UploadFile = File(...)):
     extracts survey fields, computes urgency score, and returns extracted data
     for user confirmation before saving.
     """
-    if not file.content_type in ["image/jpeg", "image/png", "image/jpg"]:
+    ct = (file.content_type or "").lower()
+    fname = (file.filename or "").lower()
+    allowed_ct = {"image/jpeg", "image/png", "image/jpg"}
+    allowed_ext = (".jpg", ".jpeg", ".png")
+    if ct not in allowed_ct and not any(fname.endswith(ext) for ext in allowed_ext):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only JPG/PNG images are accepted.",
@@ -615,6 +677,11 @@ async def ocr_survey(file: UploadFile = File(...)):
 
     try:
         image_bytes = await file.read()
+        if len(image_bytes) > MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"Image too large. Maximum size is {MAX_UPLOAD_BYTES // (1024 * 1024)} MB.",
+            )
         extracted = extract_survey_from_image(image_bytes)
         extracted["urgency_score"] = compute_urgency_score(extracted)
 

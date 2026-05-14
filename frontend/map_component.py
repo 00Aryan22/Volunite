@@ -5,8 +5,11 @@ Generates HTML/JavaScript for rendering a Google Maps view with
 cluster markers colour-coded by category.
 """
 
+import html
+import json
 import os
 from typing import List, Dict, Any
+from urllib.parse import quote
 
 
 # Category to color mapping for map markers
@@ -61,13 +64,14 @@ def generate_folium_map(clusters: List[Dict[str, Any]], surveys: List[Dict[str, 
         total_urgency = cluster.get("total_urgency", 0)
         color = CATEGORY_COLORS.get(top_category, "#718096")
         icon_emoji = CATEGORY_ICONS.get(top_category, "📍")
+        safe_cat = html.escape(str(top_category).title(), quote=True)
 
         popup_html = f"""
         <div style="font-family: 'Inter', sans-serif; min-width: 200px;">
             <h4 style="margin: 0 0 8px 0; color: {color};">
                 {icon_emoji} Cluster #{cluster.get('cluster_id', 0) + 1}
             </h4>
-            <p style="margin: 4px 0;"><strong>Category:</strong> {top_category.title()}</p>
+            <p style="margin: 4px 0;"><strong>Category:</strong> {safe_cat}</p>
             <p style="margin: 4px 0;"><strong>Needs Count:</strong> {count}</p>
             <p style="margin: 4px 0;"><strong>Total Urgency:</strong> {total_urgency:.1f}</p>
             <p style="margin: 4px 0;"><strong>Avg Urgency:</strong> {(total_urgency / max(count, 1)):.1f}</p>
@@ -82,7 +86,7 @@ def generate_folium_map(clusters: List[Dict[str, Any]], surveys: List[Dict[str, 
             fill_color=color,
             fill_opacity=0.7,
             popup=folium.Popup(popup_html, max_width=300),
-            tooltip=f"{icon_emoji} {top_category.title()} — {count} needs",
+            tooltip=html.escape(f"{icon_emoji} {str(top_category).title()} — {count} needs", quote=True),
         ).add_to(m)
 
     # Add individual survey markers if provided
@@ -95,12 +99,13 @@ def generate_folium_map(clusters: List[Dict[str, Any]], surveys: List[Dict[str, 
             if lat and lng:
                 cat = s.get("category", "healthcare")
                 color = CATEGORY_COLORS.get(cat, "#718096")
+                desc = str(s.get("description", ""))[:100]
                 popup_html = f"""
                 <div style="font-family: 'Inter', sans-serif;">
-                    <p><strong>{cat.title()}</strong> | Severity: {s.get('severity', '?')}</p>
-                    <p>{s.get('description', '')[:100]}</p>
-                    <p>District: {s.get('district', 'Unknown')}</p>
-                    <p>Urgency: {s.get('urgency_score', 0):.1f}</p>
+                    <p><strong>{html.escape(str(cat).title(), quote=True)}</strong> | Severity: {html.escape(str(s.get('severity', '?')), quote=True)}</p>
+                    <p>{html.escape(desc, quote=True)}</p>
+                    <p>District: {html.escape(str(s.get('district', 'Unknown')), quote=True)}</p>
+                    <p>Urgency: {float(s.get('urgency_score', 0)):.1f}</p>
                 </div>
                 """
                 folium.CircleMarker(
@@ -142,12 +147,13 @@ def generate_map_html(clusters: List[Dict[str, Any]], api_key: str = "") -> str:
         count = cluster.get("count", 0)
         total_urgency = cluster.get("total_urgency", 0)
         color = CATEGORY_COLORS.get(top_category, "#718096")
+        title = f"{str(top_category).title()} — {count} needs (Urgency: {total_urgency:.1f})"
 
         markers_js += f"""
         new google.maps.Marker({{
             position: {{ lat: {lat}, lng: {lng} }},
             map: map,
-            title: '{top_category.title()} — {count} needs (Urgency: {total_urgency:.1f})',
+            title: {json.dumps(title)},
             icon: {{
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: {max(8, min(count * 3, 20))},
@@ -183,7 +189,7 @@ def generate_map_html(clusters: List[Dict[str, Any]], api_key: str = "") -> str:
                 {markers_js}
             }}
         </script>
-        <script src="https://maps.googleapis.com/maps/api/js?key={api_key}&callback=initMap" async defer></script>
+        <script src="https://maps.googleapis.com/maps/api/js?key={quote(api_key, safe='')}&callback=initMap" async defer></script>
     </body>
     </html>
     """

@@ -62,8 +62,9 @@ echo -e "${YELLOW}[2/6] Building backend Docker image...${NC}"
 IMAGE_NAME="gcr.io/$PROJECT_ID/volunteermap-backend"
 TAG="latest"
 
-cd backend
-docker build -t "$IMAGE_NAME:$TAG" .
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+docker build -f backend/Dockerfile -t "$IMAGE_NAME:$TAG" .
 echo -e "${GREEN}✓ Docker image built: $IMAGE_NAME:$TAG${NC}"
 
 # ─── Step 3: Push Image to Container Registry ────────────────────────────────
@@ -83,6 +84,7 @@ echo -e "${YELLOW}[4/6] Deploying backend to Cloud Run...${NC}"
 BACKEND_SERVICE="volunteermap-backend"
 REGION="asia-south1"  # Mumbai region for India
 
+# Prefer Secret Manager for production JSON keys; these --set-env-vars lines are for hackathon-style deploys only.
 gcloud run deploy "$BACKEND_SERVICE" \
     --image "$IMAGE_NAME:$TAG" \
     --platform managed \
@@ -91,15 +93,16 @@ gcloud run deploy "$BACKEND_SERVICE" \
     --port 8080 \
     --memory 512Mi \
     --cpu 1 \
-    --set-env-vars "GEMINI_API_KEY=$(grep GEMINI_API_KEY ../.env | cut -d= -f2-)" \
-    --set-env-vars "FIREBASE_SERVICE_ACCOUNT_JSON=$(grep FIREBASE_SERVICE_ACCOUNT_JSON ../.env | cut -d= -f2-)" \
-    --set-env-vars "CLOUD_VISION_API_KEY=$(grep CLOUD_VISION_API_KEY ../.env | cut -d= -f2-)" \
+    --set-env-vars "GEMINI_API_KEY=$(grep '^GEMINI_API_KEY=' .env | cut -d= -f2-)" \
+    --set-env-vars "FIREBASE_SERVICE_ACCOUNT_JSON=$(grep '^FIREBASE_SERVICE_ACCOUNT_JSON=' .env | cut -d= -f2-)" \
+    --set-env-vars "CLOUD_VISION_API_KEY=$(grep '^CLOUD_VISION_API_KEY=' .env | cut -d= -f2-)" \
+    --set-env-vars "ENABLE_DEMO_AUTH=false" \
     --quiet
 
 BACKEND_URL=$(gcloud run services describe "$BACKEND_SERVICE" --region "$REGION" --format 'value(status.url)')
 echo -e "${GREEN}✓ Backend deployed: $BACKEND_URL${NC}"
 
-cd ..
+cd "$SCRIPT_DIR"
 
 # ─── Step 5: Update Frontend Config ──────────────────────────────────────────
 
@@ -109,7 +112,7 @@ echo -e "${YELLOW}[5/6] Updating frontend configuration...${NC}"
 # Create/update .env for frontend
 cat > frontend/.env << EOF
 BACKEND_URL=$BACKEND_URL
-GOOGLE_MAPS_API_KEY=$(grep GOOGLE_MAPS_API_KEY .env | cut -d= -f2-)
+GOOGLE_MAPS_API_KEY=$(grep '^GOOGLE_MAPS_API_KEY=' .env | cut -d= -f2-)
 EOF
 
 echo -e "${GREEN}✓ Frontend .env updated with backend URL${NC}"

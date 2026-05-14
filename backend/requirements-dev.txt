@@ -1,0 +1,2 @@
+# Development & CI — install alongside backend/requirements.txt
+pytest>=8.0.0

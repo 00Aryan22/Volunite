@@ -1,7 +1,14 @@
+/// Backend base URL.
+///
+/// Local: default `http://127.0.0.1:8000`
+/// Production / device to Cloud Run or Vercel:
+///   `flutter run --dart-define=API_BASE_URL=https://your-api.example.com`
 class ApiConfig {
-  // Production: Vercel hosted backend
-  // For local dev: use 'http://127.0.0.1:8000'
-  static const String baseUrl = 'https://volunteer-map-2hph.vercel.app';
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://127.0.0.1:8000',
+  );
+
   static const String surveysAll = '/surveys/all';
   static const String submitSurvey = '/surveys/submit';
   static const String clusters = '/surveys/clusters';

@@ -9,7 +9,7 @@ Built for Google Solution Challenge 2026 — Build with AI.
 
 import os
 import sys
-import json
+import html
 import requests
 import streamlit as st
 import pandas as pd
@@ -126,6 +126,13 @@ div[data-testid="stSidebar"] {
 
 # ─── Helper Functions ─────────────────────────────────────────────────────────
 
+def _ellipsis(text: str, max_len: int = 80) -> str:
+    t = text or ""
+    if len(t) <= max_len:
+        return t
+    return t[: max_len - 3] + "..."
+
+
 def api_get(endpoint):
     """Make a GET request to the backend API."""
     try:
@@ -185,7 +192,9 @@ if page == "📊 Dashboard":
     with st.spinner("Loading dashboard stats..."):
         stats = api_get("/dashboard/stats")
 
-    if stats:
+    if stats is None:
+        st.stop()
+    elif stats:
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric("📋 Total Surveys", stats.get("total_surveys", 0))
@@ -251,7 +260,7 @@ if page == "📊 Dashboard":
                 "Severity": "⭐" * n.get("severity", 0),
                 "Affected": n.get("affected_count", 0),
                 "Urgency Score": f"{n.get('urgency_score', 0):.1f}",
-                "Description": n.get("description", "")[:80] + "...",
+                "Description": _ellipsis(n.get("description", "")),
             }
             for n in needs
         ])
@@ -396,13 +405,18 @@ elif page == "🤖 Volunteer Matching":
                 priority = match.get("priority", "medium")
                 priority_emoji = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(priority, "⚪")
                 priority_class = f"priority-{priority}"
+                vn = html.escape(str(match.get("volunteer_name", "Volunteer")))
+                ts = html.escape(str(match.get("task_summary", "N/A")))
+                mr = html.escape(str(match.get("match_reason", "N/A")))
+                et = html.escape(str(match.get("estimated_travel_km", "?")))
+                pr = html.escape(str(priority).upper())
 
                 st.markdown(f"""
                 <div class="match-card {priority_class}">
-                    <h4>{priority_emoji} {match.get('volunteer_name', 'Volunteer')}</h4>
-                    <p><strong>Task:</strong> {match.get('task_summary', 'N/A')}</p>
-                    <p><strong>Reason:</strong> {match.get('match_reason', 'N/A')}</p>
-                    <p><strong>Travel:</strong> ~{match.get('estimated_travel_km', '?')} km | <strong>Priority:</strong> {priority.upper()}</p>
+                    <h4>{priority_emoji} {vn}</h4>
+                    <p><strong>Task:</strong> {ts}</p>
+                    <p><strong>Reason:</strong> {mr}</p>
+                    <p><strong>Travel:</strong> ~{et} km | <strong>Priority:</strong> {pr}</p>
                 </div>
                 """, unsafe_allow_html=True)
 

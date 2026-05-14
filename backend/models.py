@@ -121,3 +121,9 @@ class DashboardStats(BaseModel):
 class HealthResponse(BaseModel):
     """Health check response."""
     status: str = "ok"
+
+
+class LoginCredentials(BaseModel):
+    """Demo / coordinator login (disable in production via ENABLE_DEMO_AUTH=false)."""
+    identity: str = Field(..., min_length=1, max_length=256)
+    password: str = Field(..., min_length=1, max_length=256)
