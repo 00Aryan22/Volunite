@@ -86,7 +86,7 @@ def generate_folium_map(clusters: List[Dict[str, Any]], surveys: List[Dict[str, 
             fill_color=color,
             fill_opacity=0.7,
             popup=folium.Popup(popup_html, max_width=300),
-            tooltip=html.escape(f"{icon_emoji} {str(top_category).title()} — {count} needs", quote=True),
+            tooltip=f"{icon_emoji} {str(top_category).title()} — {count} needs",
         ).add_to(m)
 
     # Add individual survey markers if provided
