@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { MapComponent } from '../components/MapComponent';
 
 const Dashboard: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -57,8 +58,8 @@ const Dashboard: React.FC = () => {
         </motion.div>
       </div>
       
-      <div className="mt-8 bg-white/5 p-6 rounded-2xl border border-white/10 min-h-[400px] flex items-center justify-center">
-        <p className="text-gray-400">Google Maps Integration will render here.</p>
+      <div className="mt-8 bg-white/5 p-2 rounded-2xl border border-white/10 h-[500px] flex items-center justify-center shadow-2xl overflow-hidden">
+        <MapComponent />
       </div>
     </div>
   );
