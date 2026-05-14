@@ -1,5 +1,5 @@
 """
-VolunteerMap — FastAPI Backend Application.
+Volunite — FastAPI Backend Application.
 
 Main API server providing endpoints for survey management, volunteer
 registration, AI-powered matching, OCR processing, and dashboard analytics.
@@ -98,9 +98,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="VolunteerMap API",
-    description="Community Needs Intelligence Platform — Backend API",
-    version="1.0.0",
+    title="Volunite API",
+    description="Volunite — Community Needs Intelligence Platform. Unite. Serve. Impact.",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
@@ -131,9 +131,9 @@ app.add_middleware(
 # ─── Auth & Session Management ───────────────────────────────────────────────
 
 DEMO_ACCOUNTS = {
-    "admin@volunteermap.org": {"pass": "admin123", "role": "admin", "name": "System Admin"},
-    "sangli_lead@volunteermap.org": {"pass": "sangli123", "role": "lead", "name": "Sangli Coordinator"},
-    "pune_lead@volunteermap.org": {"pass": "pune123", "role": "lead", "name": "Pune Coordinator"},
+    "admin@volunite.app": {"pass": "admin123", "role": "admin", "name": "System Admin"},
+    "sangli_lead@volunite.app": {"pass": "sangli123", "role": "lead", "name": "Sangli Coordinator"},
+    "pune_lead@volunite.app": {"pass": "pune123", "role": "lead", "name": "Pune Coordinator"},
     "+919999999999": {"pass": "123456", "role": "field", "name": "Field Officer"},
     "google_demo": {"pass": "google", "role": "admin", "name": "Google User (Demo)"},
 }
@@ -182,13 +182,16 @@ async def remove_volunteer(volunteer_id: str):
 
 @app.get("/", tags=["System"], response_class=HTMLResponse)
 async def root():
-    """Interactive Web Dashboard (Desktop Prototype) for VolunteerMap."""
+    """Interactive Web Dashboard — Volunite Community Intelligence Platform."""
     return """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VolunteerMap | AI Community Intelligence</title>
+<title>Volunite | Unite. Serve. Impact.</title>
+<meta name="description" content="Volunite — AI-powered community needs intelligence platform connecting volunteers to where they're needed most.">
+<meta name="theme-color" content="#00BFA5">
+<link rel="manifest" href="/manifest.json">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -227,12 +230,12 @@ async def root():
     <div id="login-overlay">
         <div class="glass p-12 rounded-[48px] w-full max-w-md space-y-10 border-white/10 text-center">
             <div class="space-y-4">
-                <div class="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mx-auto border border-white/20 shadow-2xl">
-                    <i class="fa-solid fa-map-location-dot text-4xl text-white"></i>
+                <div class="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto shadow-2xl" style="background: linear-gradient(135deg, #00BFA5, #006064);">
+                    <i class="fa-solid fa-map-pin text-4xl text-white"></i>
                 </div>
                 <div class="space-y-1">
-                    <h2 class="text-3xl font-black text-white tracking-tight">VolunteerMap</h2>
-                    <p class="text-[10px] text-indigo-400 font-black uppercase tracking-[0.2em]">AI Community Intelligence</p>
+                    <h2 class="text-3xl font-black text-white tracking-tight">Volunite</h2>
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em]" style="color:#00BFA5;">Unite. Serve. Impact.</p>
                 </div>
             </div>
             
@@ -250,15 +253,15 @@ async def root():
                 <div class="space-y-3">
                     <input id="login-email" type="text" placeholder="Email or Phone Number" class="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm focus:border-indigo-500 focus:bg-white/10 outline-none transition-all placeholder:text-gray-600">
                     <input id="login-pass" type="password" placeholder="Password" class="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm focus:border-indigo-500 focus:bg-white/10 outline-none transition-all placeholder:text-gray-600">
-                    <button onclick="handleEmailLogin()" class="w-full py-5 btn-cosmic text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl shadow-blue-500/20 mt-4">Access Intelligence Portal</button>
+                    <button onclick="handleEmailLogin()" class="w-full py-5 btn-cosmic text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl shadow-blue-500/20 mt-4">Access Volunite Portal</button>
                 </div>
             </div>
             
             <div class="p-6 bg-white/5 rounded-3xl border border-white/10">
-                <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-3">System Access Codes</p>
+                <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-3">Demo Access Codes</p>
                 <div class="grid grid-cols-1 gap-2 text-[10px] text-gray-400 font-bold">
-                    <div class="flex justify-between px-2"><span>Admin Email:</span> <span class="text-white">admin@volunteermap.org / admin123</span></div>
-                    <div class="flex justify-between px-2 border-t border-white/5 pt-2"><span>Mobile Demo:</span> <span class="text-white">+919999999999 / 123456</span></div>
+                    <div class="flex justify-between px-2"><span>Admin:</span> <span class="text-white">admin@volunite.app / admin123</span></div>
+                    <div class="flex justify-between px-2 border-t border-white/5 pt-2"><span>Mobile:</span> <span class="text-white">+919999999999 / 123456</span></div>
                 </div>
             </div>
         </div>
@@ -269,12 +272,12 @@ async def root():
         <!-- Sidebar -->
         <aside class="w-72 sidebar-gradient flex flex-col p-6 space-y-8">
             <div class="flex items-center gap-3 px-2">
-                <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/20">
-                    <i class="fa-solid fa-map-location-dot text-xl text-white"></i>
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #00BFA5, #006064);">
+                    <i class="fa-solid fa-map-pin text-xl text-white"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight text-white">VolunteerMap</h1>
-                    <p class="text-[10px] text-white/50 font-bold tracking-widest uppercase">Community AI</p>
+                    <h1 class="text-xl font-bold tracking-tight text-white">Volunite</h1>
+                    <p class="text-[10px] text-white/50 font-bold tracking-widest uppercase">Unite. Serve. Impact.</p>
                 </div>
             </div>
 
@@ -379,7 +382,10 @@ async def root():
         }
 
         async function performLogin(identity, password) {
-            console.log('Attempting login for:', identity);
+            // Normalize legacy volunteermap.org demo emails
+            if (identity === 'admin@volunteermap.org') identity = 'admin@volunite.app';
+            if (identity === 'sangli_lead@volunteermap.org') identity = 'sangli_lead@volunite.app';
+            if (identity === 'pune_lead@volunteermap.org') identity = 'pune_lead@volunite.app';
             try {
                 const res = await fetch('/auth/login', {
                     method: 'POST',
@@ -422,16 +428,57 @@ async def root():
         function initMap() {
             if (map) return;
             map = L.map('map', { zoomControl: false }).setView([18.5204, 73.8567], 7);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Volunite'
+            }).addTo(map);
             L.control.zoom({ position: 'bottomright' }).addTo(map);
         }
 
+        const CATEGORY_COLORS = {
+            healthcare: '#f43f5e', food: '#f59e0b',
+            education: '#3b82f6', sanitation: '#10b981', employment: '#a855f7'
+        };
+        const CATEGORY_ICONS = {
+            healthcare: '🏥', food: '🍚', education: '📚', sanitation: '🚿', employment: '💼'
+        };
+
         async function updateMap() {
-            const res = await fetch('/surveys/clusters');
-            const data = await res.json();
-            data.clusters.forEach(c => {
-                L.circleMarker([c.centroid.lat, c.centroid.lng], { radius: 10 + (c.count * 2), fillColor: '#22c55e', color: '#fff', weight: 2, fillOpacity: 0.8 }).addTo(map);
-            });
+            try {
+                const res = await fetch('/surveys/clusters');
+                const data = await res.json();
+                (data.clusters || []).forEach(c => {
+                    const color = CATEGORY_COLORS[c.top_category] || '#00BFA5';
+                    const icon = CATEGORY_ICONS[c.top_category] || '📍';
+                    const radius = Math.max(10, Math.min(c.count * 4, 35));
+                    L.circleMarker([c.centroid.lat, c.centroid.lng], {
+                        radius, fillColor: color, color: '#fff',
+                        weight: 2, fillOpacity: 0.85
+                    })
+                    .addTo(map)
+                    .bindPopup(`<div style="font-family:sans-serif;min-width:160px">
+                        <b style="color:${color}">${icon} ${(c.top_category||'').toUpperCase()}</b><br>
+                        <b>Cluster #${c.cluster_id + 1}</b><br>
+                        Needs: <b>${c.count}</b><br>
+                        Total Urgency: <b>${c.total_urgency.toFixed(1)}</b>
+                    </div>`);
+                });
+                // Individual survey markers
+                const sRes = await fetch('/surveys/all');
+                const sData = await sRes.json();
+                (sData.surveys || []).forEach(s => {
+                    const loc = s.location || {};
+                    if (!loc.latitude || !loc.longitude) return;
+                    const color = CATEGORY_COLORS[s.category] || '#00BFA5';
+                    L.marker([loc.latitude, loc.longitude])
+                    .addTo(map)
+                    .bindPopup(`<div style="font-family:sans-serif;min-width:160px">
+                        <b style="color:${color}">${s.district}</b><br>
+                        <small style="color:#666;text-transform:uppercase">${s.category}</small><br>
+                        Affected: <b>${s.affected_count}</b><br>
+                        Urgency: <b>${Number(s.urgency_score||0).toFixed(1)}</b>
+                    </div>`);
+                });
+            } catch(e) { console.warn('Map update error:', e); }
         }
 
         function switchTab(tabId) {
@@ -549,6 +596,30 @@ async def root():
 async def health_check():
     """Health check endpoint. Returns status ok if the server is running."""
     return {"status": "ok"}
+
+
+@app.get("/manifest.json", tags=["System"])
+async def pwa_manifest():
+    """PWA Web App Manifest — makes Volunite installable on Android/iOS."""
+    from fastapi.responses import JSONResponse
+    return JSONResponse({
+        "name": "Volunite",
+        "short_name": "Volunite",
+        "description": "Unite. Serve. Impact. — AI-powered community needs intelligence.",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#0f0c29",
+        "theme_color": "#00BFA5",
+        "orientation": "portrait-primary",
+        "icons": [
+            {"src": "https://img.icons8.com/color/192/map-pin.png", "sizes": "192x192", "type": "image/png"},
+            {"src": "https://img.icons8.com/color/512/map-pin.png", "sizes": "512x512", "type": "image/png"}
+        ],
+        "categories": ["productivity", "utilities"],
+        "lang": "en-IN"
+    })
+
+
 
 
 # ─── Survey Endpoints ────────────────────────────────────────────────────────

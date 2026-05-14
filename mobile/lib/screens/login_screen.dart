@@ -25,8 +25,8 @@ class _LoginScreenState extends State<LoginScreen> {
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Invalid credentials. Try: admin@volunteermap.org / admin123'),
-          backgroundColor: Colors.red,
+          content: Text('Invalid credentials. Try: admin@volunite.app / admin123'),
+          backgroundColor: Color(0xFF006064),
         ),
       );
     }
@@ -88,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
                   const Text(
-                    'VolunteerMap',
+                    'Volunite',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -97,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const Text(
-                    'AI COMMUNITY INTELLIGENCE',
+                    'UNITE. SERVE. IMPACT.',
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
@@ -192,15 +192,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withOpacity(0.1),
+                      color: Colors.teal.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.amber.withOpacity(0.2)),
+                      border: Border.all(color: Colors.teal.withOpacity(0.2)),
                     ),
                     child: const Column(
                       children: [
-                        Text('DEMO ACCOUNTS', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 10)),
+                        Text('DEMO ACCOUNTS', style: TextStyle(color: Color(0xFF00BFA5), fontWeight: FontWeight.bold, fontSize: 10)),
                         SizedBox(height: 4),
-                        Text('admin@volunteermap.org / admin123', style: TextStyle(color: Colors.white60, fontSize: 10)),
+                        Text('admin@volunite.app / admin123', style: TextStyle(color: Colors.white60, fontSize: 10)),
                       ],
                     ),
                   ),

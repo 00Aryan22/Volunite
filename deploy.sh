@@ -1,14 +1,13 @@
 #!/bin/bash
-# VolunteerMap — One-Command Deploy Script
-# Deploys backend to Google Cloud Run and frontend to Firebase Hosting
+# Volunite — One-Command Deploy Script
+# Deploys backend to Google Cloud Run OR Vercel (free)
 #
 # Usage: chmod +x deploy.sh && ./deploy.sh
 #
 # Prerequisites:
-#   - gcloud CLI installed and authenticated
-#   - firebase CLI installed
-#   - .env file configured with all API keys
-#   - Firebase project initialized
+#   - gcloud CLI installed and authenticated (for Cloud Run)
+#   - OR: vercel CLI (npm i -g vercel) for free Vercel deploy
+#   - .env file configured with API keys
 
 set -e
 
@@ -20,7 +19,8 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}╔══════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║     🗺️  VolunteerMap Deploy Script       ║${NC}"
+echo -e "${BLUE}║        📍  Volunite Deploy Script        ║${NC}"
+echo -e "${BLUE}║       Unite. Serve. Impact.  🚀           ║${NC}"
 echo -e "${BLUE}╚══════════════════════════════════════════╝${NC}"
 echo ""
 

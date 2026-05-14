@@ -1,8 +1,8 @@
 """
-Google Maps HTML embed helper for VolunteerMap.
+OpenStreetMap / Folium map helper for Volunite.
 
-Generates HTML/JavaScript for rendering a Google Maps view with
-cluster markers colour-coded by category.
+Generates Folium maps with Leaflet/OSM tiles and cluster markers
+colour-coded by category. 100% free, no API key required.
 """
 
 import html
@@ -50,8 +50,8 @@ def generate_folium_map(clusters: List[Dict[str, Any]], surveys: List[Dict[str, 
     m = folium.Map(
         location=[center_lat, center_lng],
         zoom_start=7,
-        tiles="CartoDB dark_matter",
-        attr="VolunteerMap",
+        tiles="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        attr="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors | Volunite",
     )
 
     # Add cluster markers

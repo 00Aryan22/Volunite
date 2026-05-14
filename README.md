@@ -1,10 +1,12 @@
-# 🗺️ VolunteerMap — Community Needs Intelligence Platform
+# 📍 Volunite — Community Needs Intelligence Platform
 
-> **Connecting communities to care through AI-powered insights**
+> **Unite. Serve. Impact.**
 
-VolunteerMap helps Indian NGOs turn scattered community survey data — including paper surveys — into an intelligent, real-time map of urgent local needs. It automatically matches available volunteers to the tasks where they are needed most, using Google's Gemini AI. The platform features OCR-powered paper survey digitisation via Cloud Vision API, K-Means geographic clustering to identify need hotspots, and a beautiful real-time dashboard for NGO coordinators.
+Volunite helps Indian NGOs turn scattered community survey data — including paper surveys — into an intelligent, real-time map of urgent local needs. It automatically matches available volunteers to the tasks where they are needed most, using Google's Gemini AI. The platform features OCR-powered paper survey digitisation via Cloud Vision API, K-Means geographic clustering to identify need hotspots, and a beautiful real-time dashboard for NGO coordinators.
 
-Built as a production-ready solution for the **Google Solution Challenge 2026 — Build with AI** hackathon, VolunteerMap demonstrates how AI can bridge the gap between grassroots community data collection and effective volunteer deployment at scale.
+Built as a production-ready solution for the **Google Solution Challenge 2026 — Build with AI**.
+
+🌐 **Live Demo**: [volunite.vercel.app](https://volunite.vercel.app)
 
 ---
 
@@ -12,192 +14,134 @@ Built as a production-ready solution for the **Google Solution Challenge 2026 �
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        USER INTERFACE                           │
-│                  Streamlit Dashboard (Python)                   │
-│    ┌──────────┐ ┌───────────┐ ┌──────────┐ ┌───────────────┐   │
-│    │Dashboard │ │Survey Form│ │OCR Upload│ │ AI Matching   │   │
-│    │  + Map   │ │           │ │          │ │   Results     │   │
-│    └────┬─────┘ └─────┬─────┘ └────┬─────┘ └───────┬───────┘   │
-│         │             │            │               │            │
-└─────────┼─────────────┼────────────┼───────────────┼────────────┘
-          │   REST API  │            │               │
-┌─────────┼─────────────┼────────────┼───────────────┼────────────┐
-│         ▼             ▼            ▼               ▼            │
+│                        USER INTERFACES                          │
+│          Streamlit Dashboard  ·  Web PWA  ·  Flutter App        │
+└─────────────────────────┬───────────────────────────────────────┘
+                          │   REST API
+┌─────────────────────────▼───────────────────────────────────────┐
 │                    FastAPI Backend (Python)                      │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │  /surveys/*  │  /volunteers/*  │  /dashboard/*  │ /health│   │
-│  └──────┬───────┴────────┬────────┴───────┬────────┴────────┘   │
-│         │                │                │                     │
-│  ┌──────▼──────┐  ┌──────▼──────┐  ┌──────▼──────┐             │
-│  │ ML Pipeline │  │   Gemini    │  │     OCR     │             │
-│  │  (sklearn)  │  │  Matcher    │  │  Processor  │             │
-│  │ - Urgency   │  │ (gemini-1.5 │  │ (Cloud      │             │
-│  │ - K-Means   │  │  -flash)    │  │  Vision)    │             │
-│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘             │
-│         │                │                │                     │
-│         └────────────────┼────────────────┘                     │
-│                          │                                      │
-│                  ┌───────▼───────┐                              │
-│                  │   Firebase    │                              │
-│                  │  Firestore DB │                              │
-│                  └───────────────┘                              │
+│  /surveys/*  │  /volunteers/*  │  /dashboard/*  │  /health      │
+│  ML Pipeline │  Gemini Matcher │  OCR Processor │  Firebase     │
 └─────────────────────────────────────────────────────────────────┘
 
 Deployment:
-  Backend  →  Google Cloud Run (Docker, build from repo root)
-  Frontend →  Streamlit Cloud / self-hosted / Firebase Hosting (static)
-  Mobile    →  Flutter (Android / iOS)
+  Backend  →  Vercel (Free, Permanent) / Google Cloud Run
+  Frontend →  Streamlit Community Cloud (Free)
+  Mobile   →  Flutter (Android / iOS)
   Database →  Firebase Firestore (optional; in-memory demo without credentials)
+  Map      →  OpenStreetMap + Leaflet (Free, no API key needed)
 ```
-
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for production-oriented detail.
 
 ---
 
 ## ✅ Prerequisites
 
-Before setting up VolunteerMap, ensure you have:
-
 | Requirement | Details |
 |---|---|
 | **Python** | 3.11 or higher |
-| **Google Cloud Account** | With billing enabled |
-| **Firebase Project** | Created in Firebase Console |
-| **gcloud CLI** | Installed and authenticated |
-| **API Keys** | Gemini, Cloud Vision, Google Maps |
+| **Node.js** | For Vercel CLI |
+| **Flutter** | 3.x SDK |
+| **Vercel Account** | Free at vercel.com |
+
+> **💡 Demo Mode:** Works without ANY API keys! Uses mock AI responses and in-memory storage.
 
 ---
 
-## 🔑 How to Get API Keys
-
-### Gemini API Key
-1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
-2. Click "Create API Key"
-3. Copy the key to your `.env` file
-
-### Google Cloud Vision API
-1. Go to [GCP Console → APIs & Services](https://console.cloud.google.com/apis/library)
-2. Search for "Cloud Vision API" and enable it
-3. Go to Credentials → Create Credentials → API Key
-
-### Google Maps JavaScript API
-1. Go to [GCP Console → APIs & Services](https://console.cloud.google.com/apis/library)
-2. Search for "Maps JavaScript API" and enable it
-3. Go to Credentials → Create Credentials → API Key
-
-### Firebase Service Account
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Select your project → Project Settings → Service Accounts
-3. Click "Generate New Private Key"
-4. Copy the JSON content to your `.env` file
-
----
-
-## 🚀 Local Setup (Step-by-Step)
+## 🚀 Quick Start (Local)
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/volunteermap.git
-cd volunteermap
+git clone https://github.com/00Aryan22/Volunite.git
+cd Volunite
 ```
 
 ### 2. Set up environment variables
 ```bash
 cp .env.example .env
-# Edit .env with your API keys (or leave defaults for demo mode)
+# Edit .env — or leave defaults for demo mode (no keys needed)
 ```
 
-### 3. Create virtual environment and install dependencies
-```bash
-python3 -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
-pip install -r backend/requirements.txt
-pip install -r backend/requirements-dev.txt   # optional: pytest for CI / local tests
-pip install -r frontend/requirements.txt
-```
-
-### 4. Start the backend server
+### 3. Install & run backend
 ```bash
 cd backend
+pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
-# or: python main.py
 ```
 
-### 5. Verify the backend is running
-```bash
-curl http://localhost:8000/health
-# Should return: {"status": "ok"}
-```
-
-### 6. Start the Streamlit frontend (in a new terminal)
+### 4. Run Streamlit frontend (new terminal)
 ```bash
 cd frontend
+pip install -r requirements.txt
 streamlit run app.py
 ```
 
-### 7. Open the dashboard
-Navigate to `http://localhost:8501` in your browser.
+### 5. Open the dashboard
+- **Web Dashboard**: http://localhost:8000
+- **Streamlit UI**: http://localhost:8501
+- **API Docs**: http://localhost:8000/docs
 
-> **💡 Demo Mode:** The app works without any API keys! It uses mock responses for Gemini AI matching and OCR processing, and stores data in-memory instead of Firestore.
+Demo credentials: `admin@volunite.app` / `admin123`
 
-### 8. Run backend tests (optional)
-```bash
-cd backend
-pytest -q
-```
-
-### 9. Flutter mobile (optional)
+### 6. Flutter mobile (optional)
 ```bash
 cd mobile
 flutter pub get
-flutter run --dart-define=API_BASE_URL=http://127.0.0.1:8000
+flutter run
 ```
 
 ---
 
-## 🔒 Production security checklist
+## 🌐 Vercel Deployment (Free & Permanent)
 
-| Topic | Recommendation |
-|--------|----------------|
-| Demo login | Set `ENABLE_DEMO_AUTH=false` on any public API; replace with Firebase Auth or your IdP. |
-| CORS | Set `CORS_ORIGINS` to explicit origins (comma-separated). Defaults cover localhost Streamlit + API only. |
-| Secrets | Prefer `FIREBASE_SERVICE_ACCOUNT_PATH` or Secret Manager over pasting JSON into env vars. |
-| Uploads | Tune `MAX_UPLOAD_MB` (default 10) for CSV/OCR endpoints. |
-| CI | GitHub Actions runs `pytest` and `flutter analyze` / `flutter test` on push (see `.github/workflows/ci.yml`). |
+### One-command deploy:
+```bash
+npm i -g vercel
+cd backend
+vercel --prod
+```
+
+That's it! Vercel auto-detects the FastAPI Python app from `vercel.json`.
+
+### Environment Variables on Vercel:
+Set these in your Vercel project dashboard → Settings → Environment Variables:
+```
+GEMINI_API_KEY=your_key
+CLOUD_VISION_API_KEY=your_key
+FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
+ENABLE_DEMO_AUTH=true
+```
 
 ---
 
-## 📡 API Endpoint Reference
+## 🔑 API Keys (All Optional for Demo)
+
+| Key | Where to Get | Required? |
+|---|---|---|
+| `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com/app/apikey) | Optional (mock fallback) |
+| `CLOUD_VISION_API_KEY` | GCP Console → APIs | Optional (mock OCR) |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Firebase Console → Service Accounts | Optional (in-memory) |
+
+---
+
+## 📡 API Endpoints
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/health` | Health check — returns `{"status": "ok"}` |
-| `POST` | `/surveys/submit` | Submit a new community need survey |
-| `POST` | `/surveys/upload-csv` | Upload CSV file with multiple surveys |
-| `POST` | `/surveys/ocr` | Extract survey from paper image (OCR) |
-| `GET` | `/surveys/all` | Get all survey entries |
-| `GET` | `/surveys/clusters` | Get K-Means clustered needs |
-| `GET` | `/surveys/urgent` | Get top 10 most urgent needs |
-| `POST` | `/volunteers/register` | Register a new volunteer |
-| `GET` | `/volunteers/available` | Get all available volunteers |
-| `POST` | `/volunteers/match` | Run AI matching for urgent needs |
-| `GET` | `/dashboard/stats` | Get dashboard summary statistics |
+| `GET` | `/` | Web Dashboard (PWA) |
+| `GET` | `/health` | Health check |
+| `POST` | `/auth/login` | Demo login |
+| `POST` | `/surveys/submit` | Submit community need survey |
+| `POST` | `/surveys/upload-csv` | Upload CSV with multiple surveys |
+| `POST` | `/surveys/ocr` | Extract survey from image (OCR) |
+| `GET` | `/surveys/all` | Get all surveys |
+| `GET` | `/surveys/clusters` | K-Means clustered needs |
+| `GET` | `/surveys/urgent` | Top 10 urgent needs |
+| `POST` | `/volunteers/register` | Register volunteer |
+| `GET` | `/volunteers/available` | Get available volunteers |
+| `POST` | `/volunteers/match` | Run AI matching |
+| `GET` | `/dashboard/stats` | Dashboard statistics |
 
-**Interactive API docs:** `http://localhost:8000/docs` (Swagger UI)
-
----
-
-## 🚢 Production Deployment
-
-### One-command deploy (bash / Linux or WSL)
-```bash
-chmod +x deploy.sh
-./deploy.sh
-```
-
-The script builds Docker from the **repository root** (`docker build -f backend/Dockerfile .`), pushes to GCR, deploys Cloud Run with `ENABLE_DEMO_AUTH=false`, writes `frontend/.env`, and runs `firebase deploy --only hosting` when configured.
-
-Review [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) before using raw `.env` values in `gcloud` flags; use Secret Manager for funded production workloads.
+**Interactive API Docs**: `https://your-app.vercel.app/docs`
 
 ---
 
@@ -207,55 +151,37 @@ Review [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) before using raw `.env` values i
 |---|---|
 | Backend API | Python 3.11 + FastAPI |
 | ML Pipeline | scikit-learn, Pandas, NumPy |
-| AI Matching | Google Gemini API (gemini-1.5-flash) |
+| AI Matching | Google Gemini API |
 | OCR | Google Cloud Vision API |
-| Database | Firebase Firestore (real-time) |
-| Authentication | Demo login on API (`ENABLE_DEMO_AUTH`); Firebase Auth for client apps (see `firebase/`) |
-| Frontend | Streamlit (Python) + Folium Maps |
-| Deployment | Cloud Run (backend) + Firebase Hosting (frontend) |
-| Environment | python-dotenv for secrets |
-
----
-
-## 📸 Screenshots
-
-> _Screenshots will be added after the first successful deployment._
-
-| Dashboard | Survey Submission | OCR Upload | AI Matching |
-|---|---|---|---|
-| ![Dashboard](screenshots/dashboard.png) | ![Survey](screenshots/survey.png) | ![OCR](screenshots/ocr.png) | ![Matching](screenshots/matching.png) |
+| Database | Firebase Firestore (or in-memory) |
+| Map | OpenStreetMap + Leaflet (free!) |
+| Frontend | Streamlit + Folium |
+| Mobile | Flutter (Android/iOS) |
+| Deployment | **Vercel** (backend) + Streamlit Cloud (frontend) |
 
 ---
 
 ## 📂 Project Structure
 
 ```
-volunteermap/
+Volunite/
 ├── backend/
-│   ├── main.py              # FastAPI app — all API endpoints
-│   ├── tests/               # Pytest API smoke tests
+│   ├── main.py              # FastAPI — all endpoints + web dashboard
+│   ├── firebase_client.py   # Firestore helpers + in-memory fallback
+│   ├── gemini_matcher.py    # Gemini AI volunteer matching
 │   ├── ml_pipeline.py       # Urgency scoring + K-Means clustering
-│   ├── gemini_matcher.py    # Gemini API volunteer matching
-│   ├── ocr_processor.py     # Cloud Vision OCR for paper surveys
-│   ├── firebase_client.py   # Firestore read/write helpers
-│   ├── models.py            # Pydantic data models
-│   ├── requirements.txt     # Backend dependencies
-│   ├── requirements-dev.txt # pytest (CI / local)
-│   └── Dockerfile           # Cloud Run (build from repo root)
+│   ├── ocr_processor.py     # Cloud Vision OCR
+│   ├── models.py            # Pydantic models
+│   ├── vercel.json          # Vercel deployment config
+│   └── Dockerfile           # Cloud Run (alternative)
 ├── frontend/
 │   ├── app.py               # Streamlit dashboard
-│   ├── map_component.py     # Map embed helper (Folium)
-│   └── requirements.txt     # Frontend dependencies
+│   └── map_component.py     # Folium OSM map helper
 ├── mobile/                  # Flutter field app
-├── docs/                    # Architecture + deployment notes
-├── .github/workflows/       # CI (pytest + Flutter)
-├── data/
-│   └── sample_surveys.json  # Sample surveys + volunteers
-├── firebase/
-│   └── firestore.rules      # Firestore security rules
-├── .env.example             # Environment variable template
-├── deploy.sh                # One-command deploy script
-└── README.md                # This file
+├── .github/workflows/       # CI/CD
+├── data/sample_surveys.json # Sample data
+├── vercel.json              # Root Vercel config
+└── README.md
 ```
 
 ---
@@ -264,8 +190,10 @@ volunteermap/
 
 **Google Solution Challenge 2026 — Build with AI** 🚀
 
+**GitHub**: [github.com/00Aryan22/Volunite](https://github.com/00Aryan22/Volunite)
+
 ---
 
 ## 📄 License
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT License.

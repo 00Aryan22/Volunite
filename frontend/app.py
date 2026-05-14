@@ -1,7 +1,7 @@
 """
-VolunteerMap — Streamlit Dashboard.
+Volunite — Streamlit Dashboard.
 
-Interactive frontend for the Community Needs Intelligence Platform.
+Interactive frontend for the Volunite Community Needs Intelligence Platform.
 Connects to the FastAPI backend for data operations.
 
 Built for Google Solution Challenge 2026 — Build with AI.
@@ -25,8 +25,8 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 # ─── Page Config ──────────────────────────────────────────────────────────────
 
 st.set_page_config(
-    page_title="VolunteerMap — Community Needs Intelligence",
-    page_icon="🗺️",
+    page_title="Volunite — Unite. Serve. Impact.",
+    page_icon="📍",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -166,8 +166,8 @@ def api_post(endpoint, data=None, files=None):
 # ─── Sidebar ──────────────────────────────────────────────────────────────────
 
 with st.sidebar:
-    st.markdown('<h1 class="main-header">🗺️ VolunteerMap</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="tagline">Connecting communities to care</p>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">📍 Volunite</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="tagline">Unite. Serve. Impact.</p>', unsafe_allow_html=True)
     st.divider()
 
     page = st.radio(
@@ -184,7 +184,7 @@ with st.sidebar:
 # ─── Dashboard Page ──────────────────────────────────────────────────────────
 
 if page == "📊 Dashboard":
-    st.markdown("## 📊 Community Needs Dashboard")
+    st.markdown("## 📊 Volunite Community Dashboard")
     st.markdown("Real-time intelligence on community needs across Maharashtra")
     st.markdown("")
 

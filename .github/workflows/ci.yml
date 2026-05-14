@@ -1,4 +1,4 @@
-name: CI
+name: Volunite CI
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
 
 jobs:
   backend:
+    name: Backend Tests (FastAPI + pytest)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -25,10 +26,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
-      - name: Pytest
+      - name: Run pytest
         run: pytest -q
+      - name: Check imports
+        run: python -c "import main; print('✅ Volunite backend imports OK')"
 
   flutter:
+    name: Flutter Mobile (analyze + test)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -39,6 +43,9 @@ jobs:
         with:
           channel: stable
           cache: true
-      - run: flutter pub get
-      - run: flutter analyze
-      - run: flutter test
+      - name: Flutter pub get
+        run: flutter pub get
+      - name: Flutter analyze
+        run: flutter analyze
+      - name: Flutter test
+        run: flutter test

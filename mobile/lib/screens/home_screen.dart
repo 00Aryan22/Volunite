@@ -36,13 +36,13 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'VolunteerMap',
+              'Volunite',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             if (user != null)
               Text(
                 'Welcome, ${user['name']}',
-                style: TextStyle(fontSize: 10, color: Colors.teal[800], fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 10, color: Color(0xFF006064), fontWeight: FontWeight.bold),
               ),
           ],
         ),

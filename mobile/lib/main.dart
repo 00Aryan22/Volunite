@@ -28,22 +28,22 @@ class VolunteerMapApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
       ],
       child: MaterialApp(
-        title: 'VolunteerMap',
+        title: 'Volunite',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF00897B),
-            primary: const Color(0xFF00897B),
+            seedColor: const Color(0xFF00BFA5),
+            primary: const Color(0xFF00BFA5),
           ),
           textTheme: GoogleFonts.poppinsTextTheme(),
           appBarTheme: AppBarTheme(
             backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
+            foregroundColor: const Color(0xFF006064),
             elevation: 0,
             centerTitle: false,
             titleTextStyle: GoogleFonts.poppins(
-              color: Colors.black,
+              color: const Color(0xFF006064),
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
