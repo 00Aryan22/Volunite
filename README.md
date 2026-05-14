@@ -1,12 +1,23 @@
 # 📍 Volunite — Community Needs Intelligence Platform
 
-> **Unite. Serve. Impact.**
+> **Unite. Serve. Impact. Engineered for Precision.**
 
-Volunite helps Indian NGOs turn scattered community survey data — including paper surveys — into an intelligent, real-time map of urgent local needs. It automatically matches available volunteers to the tasks where they are needed most, using Google's Gemini AI. The platform features OCR-powered paper survey digitisation via Cloud Vision API, K-Means geographic clustering to identify need hotspots, and a beautiful real-time dashboard for NGO coordinators.
+Volunite transforms scattered community data into actionable operational intelligence. Using Google's Gemini AI and Cloud Vision, it digitizes field surveys, performs geospatial clustering to identify crisis hotspots, and orchestrates optimal volunteer deployment. 
 
-Built as a production-ready solution for the **Google Solution Challenge 2026 — Build with AI**.
+**This platform is engineered to meet the highest standards of professional UI/UX, designed for national-level hackathon excellence.**
 
-🌐 **Live Demo**: [volunite.vercel.app](https://volunite.vercel.app)
+🌐 **Live Dashboard**: [volunite.vercel.app](https://volunite.vercel.app)
+
+---
+
+## ✨ High-Fidelity UI/UX System
+
+Volunite features a cohesive, premium design language built for clarity and impact across web and mobile.
+
+- **Typography**: Powered by **Plus Jakarta Sans**, a modern geometric sans-serif that ensures readability and a premium, high-tech feel.
+- **Glassmorphism**: Sophisticated translucent overlays and blur effects across the dashboard create depth and a modern "App-like" experience.
+- **Dark-Mode Intelligence**: The central command map uses **CartoDB Dark Matter** tiles, providing superior visual contrast for critical need clusters.
+- **Dynamic Feedback**: Real-time status indicators, shimmer loading states, and animated metric cards ensure a responsive, "alive" interface.
 
 ---
 
@@ -16,6 +27,7 @@ Built as a production-ready solution for the **Google Solution Challenge 2026 �
 ┌─────────────────────────────────────────────────────────────────┐
 │                        USER INTERFACES                          │
 │          Streamlit Dashboard  ·  Web PWA  ·  Flutter App        │
+│          (Plus Jakarta Sans + Glassmorphism Design)             │
 └─────────────────────────┬───────────────────────────────────────┘
                           │   REST API
 ┌─────────────────────────▼───────────────────────────────────────┐
@@ -23,14 +35,16 @@ Built as a production-ready solution for the **Google Solution Challenge 2026 �
 │  /surveys/*  │  /volunteers/*  │  /dashboard/*  │  /health      │
 │  ML Pipeline │  Gemini Matcher │  OCR Processor │  Firebase     │
 └─────────────────────────────────────────────────────────────────┘
-
-Deployment:
-  Backend  →  Vercel (Free, Permanent) / Google Cloud Run
-  Frontend →  Streamlit Community Cloud (Free)
-  Mobile   →  Flutter (Android / iOS)
-  Database →  Firebase Firestore (optional; in-memory demo without credentials)
-  Map      →  OpenStreetMap + Leaflet (Free, no API key needed)
 ```
+
+---
+
+## 🚀 Technical Highlights
+
+- **Gemini AI Matching**: Intelligent volunteer-to-mission orchestration based on skills, proximity, and urgency.
+- **K-Means Geospatial Clustering**: Automated identification of need density to optimize NGO resource allocation.
+- **OCR Survey Digitization**: Cloud Vision API integration to bridge the gap between paper-based field work and digital intelligence.
+- **CartoDB Visuals**: High-contrast dark mapping with custom categorical markers for instant situational awareness.
 
 ---
 
@@ -38,110 +52,11 @@ Deployment:
 
 | Requirement | Details |
 |---|---|
-| **Python** | 3.11 or higher |
-| **Node.js** | For Vercel CLI |
-| **Flutter** | 3.x SDK |
-| **Vercel Account** | Free at vercel.com |
+| **Python** | 3.11+ (FastAPI + ML) |
+| **Flutter** | 3.x (Material 3 + Jakarta Sans) |
+| **Node.js** | Vercel Deployment CLI |
 
-> **💡 Demo Mode:** Works without ANY API keys! Uses mock AI responses and in-memory storage.
-
----
-
-## 🚀 Quick Start (Local)
-
-### 1. Clone the repository
-```bash
-git clone https://github.com/00Aryan22/Volunite.git
-cd Volunite
-```
-
-### 2. Set up environment variables
-```bash
-cp .env.example .env
-# Edit .env — or leave defaults for demo mode (no keys needed)
-```
-
-### 3. Install & run backend
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
-```
-
-### 4. Run Streamlit frontend (new terminal)
-```bash
-cd frontend
-pip install -r requirements.txt
-streamlit run app.py
-```
-
-### 5. Open the dashboard
-- **Web Dashboard**: http://localhost:8000
-- **Streamlit UI**: http://localhost:8501
-- **API Docs**: http://localhost:8000/docs
-
-Demo credentials: `admin@volunite.app` / `admin123`
-
-### 6. Flutter mobile (optional)
-```bash
-cd mobile
-flutter pub get
-flutter run
-```
-
----
-
-## 🌐 Vercel Deployment (Free & Permanent)
-
-### One-command deploy:
-```bash
-npm i -g vercel
-cd backend
-vercel --prod
-```
-
-That's it! Vercel auto-detects the FastAPI Python app from `vercel.json`.
-
-### Environment Variables on Vercel:
-Set these in your Vercel project dashboard → Settings → Environment Variables:
-```
-GEMINI_API_KEY=your_key
-CLOUD_VISION_API_KEY=your_key
-FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
-ENABLE_DEMO_AUTH=true
-```
-
----
-
-## 🔑 API Keys (All Optional for Demo)
-
-| Key | Where to Get | Required? |
-|---|---|---|
-| `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com/app/apikey) | Optional (mock fallback) |
-| `CLOUD_VISION_API_KEY` | GCP Console → APIs | Optional (mock OCR) |
-| `FIREBASE_SERVICE_ACCOUNT_JSON` | Firebase Console → Service Accounts | Optional (in-memory) |
-
----
-
-## 📡 API Endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/` | Web Dashboard (PWA) |
-| `GET` | `/health` | Health check |
-| `POST` | `/auth/login` | Demo login |
-| `POST` | `/surveys/submit` | Submit community need survey |
-| `POST` | `/surveys/upload-csv` | Upload CSV with multiple surveys |
-| `POST` | `/surveys/ocr` | Extract survey from image (OCR) |
-| `GET` | `/surveys/all` | Get all surveys |
-| `GET` | `/surveys/clusters` | K-Means clustered needs |
-| `GET` | `/surveys/urgent` | Top 10 urgent needs |
-| `POST` | `/volunteers/register` | Register volunteer |
-| `GET` | `/volunteers/available` | Get available volunteers |
-| `POST` | `/volunteers/match` | Run AI matching |
-| `GET` | `/dashboard/stats` | Dashboard statistics |
-
-**Interactive API Docs**: `https://your-app.vercel.app/docs`
+> **💡 Zero-Config Demo:** Runs out-of-the-box with mock AI fallbacks and in-memory storage. No API keys required for initial testing.
 
 ---
 
@@ -149,15 +64,13 @@ ENABLE_DEMO_AUTH=true
 
 | Layer | Technology |
 |---|---|
-| Backend API | Python 3.11 + FastAPI |
-| ML Pipeline | scikit-learn, Pandas, NumPy |
-| AI Matching | Google Gemini API |
-| OCR | Google Cloud Vision API |
-| Database | Firebase Firestore (or in-memory) |
-| Map | OpenStreetMap + Leaflet (free!) |
-| Frontend | Streamlit + Folium |
-| Mobile | Flutter (Android/iOS) |
-| Deployment | **Vercel** (backend) + Streamlit Cloud (frontend) |
+| **Intelligence** | Google Gemini AI (Matching), scikit-learn (Clustering) |
+| **Vision** | Google Cloud Vision (OCR Processor) |
+| **Backend** | Python 3.11, FastAPI, Pydantic |
+| **Mapping** | CartoDB Dark Matter, Leaflet, Folium |
+| **Typography** | Plus Jakarta Sans (via Google Fonts) |
+| **Mobile** | Flutter (Material 3, Provider, fl_chart) |
+| **Deployment** | Vercel (Backend), Streamlit Cloud (Frontend) |
 
 ---
 
@@ -165,30 +78,18 @@ ENABLE_DEMO_AUTH=true
 
 ```
 Volunite/
-├── backend/
-│   ├── main.py              # FastAPI — all endpoints + web dashboard
-│   ├── firebase_client.py   # Firestore helpers + in-memory fallback
-│   ├── gemini_matcher.py    # Gemini AI volunteer matching
-│   ├── ml_pipeline.py       # Urgency scoring + K-Means clustering
-│   ├── ocr_processor.py     # Cloud Vision OCR
-│   ├── models.py            # Pydantic models
-│   ├── vercel.json          # Vercel deployment config
-│   └── Dockerfile           # Cloud Run (alternative)
-├── frontend/
-│   ├── app.py               # Streamlit dashboard
-│   └── map_component.py     # Folium OSM map helper
-├── mobile/                  # Flutter field app
-├── .github/workflows/       # CI/CD
-├── data/sample_surveys.json # Sample data
-├── vercel.json              # Root Vercel config
-└── README.md
+├── backend/            # FastAPI Intelligence API + PWA Dashboard
+├── frontend/           # Streamlit Coordinator Interface
+├── mobile/             # Flutter Field Responder App
+├── data/               # Sample Mission & Volunteer Datasets
+└── vercel.json         # Production Deployment Configuration
 ```
 
 ---
 
-## 🏆 Built for
+## 🏆 Competition Entry
 
-**Google Solution Challenge 2026 — Build with AI** 🚀
+**Built for the Google Solution Challenge 2026 — Build with AI.**
 
 **GitHub**: [github.com/00Aryan22/Volunite](https://github.com/00Aryan22/Volunite)
 
@@ -196,4 +97,4 @@ Volunite/
 
 ## 📄 License
 
-MIT License.
+MIT License. Designed with ❤️ for social impact.

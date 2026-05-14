@@ -12,13 +12,13 @@ from typing import List, Dict, Any
 from urllib.parse import quote
 
 
-# Category to color mapping for map markers
+# Category to color mapping for map markers (Vibrant Premium Palette)
 CATEGORY_COLORS = {
-    "healthcare": "#E53E3E",   # Red
-    "food": "#ED8936",         # Orange
-    "education": "#3182CE",    # Blue
-    "sanitation": "#38A169",   # Green
-    "employment": "#805AD5",   # Purple
+    "healthcare": "#f43f5e",   # Rose
+    "food": "#f59e0b",         # Amber
+    "education": "#3b82f6",    # Blue
+    "sanitation": "#10b981",   # Emerald
+    "employment": "#a855f7",   # Purple
 }
 
 CATEGORY_ICONS = {
@@ -32,26 +32,21 @@ CATEGORY_ICONS = {
 
 def generate_folium_map(clusters: List[Dict[str, Any]], surveys: List[Dict[str, Any]] = None) -> object:
     """
-    Generate a Folium map with cluster markers and survey points.
-
-    Args:
-        clusters: List of cluster result dictionaries from ML pipeline.
-        surveys: Optional list of individual survey entries to show.
-
-    Returns:
-        A folium.Map object ready for rendering in Streamlit.
+    Generate a premium Folium map with cluster markers and survey points.
     """
     import folium
     from folium import plugins
 
     # Centre on Maharashtra
-    center_lat = 18.5
-    center_lng = 74.0
+    center_lat = 18.5204
+    center_lng = 73.8567
+    
+    # Use CartoDB Dark Matter for a high-end look
     m = folium.Map(
         location=[center_lat, center_lng],
         zoom_start=7,
-        tiles="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        attr="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors | Volunite",
+        tiles='CartoDB dark_matter',
+        attr="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors | Volunite Intelligence",
     )
 
     # Add cluster markers
@@ -62,50 +57,69 @@ def generate_folium_map(clusters: List[Dict[str, Any]], surveys: List[Dict[str, 
         top_category = cluster.get("top_category", "healthcare")
         count = cluster.get("count", 0)
         total_urgency = cluster.get("total_urgency", 0)
-        color = CATEGORY_COLORS.get(top_category, "#718096")
+        color = CATEGORY_COLORS.get(top_category, "#00BFA5")
         icon_emoji = CATEGORY_ICONS.get(top_category, "📍")
-        safe_cat = html.escape(str(top_category).title(), quote=True)
+        safe_cat = html.escape(str(top_category).upper(), quote=True)
 
         popup_html = f"""
-        <div style="font-family: 'Inter', sans-serif; min-width: 200px;">
-            <h4 style="margin: 0 0 8px 0; color: {color};">
-                {icon_emoji} Cluster #{cluster.get('cluster_id', 0) + 1}
-            </h4>
-            <p style="margin: 4px 0;"><strong>Category:</strong> {safe_cat}</p>
-            <p style="margin: 4px 0;"><strong>Needs Count:</strong> {count}</p>
-            <p style="margin: 4px 0;"><strong>Total Urgency:</strong> {total_urgency:.1f}</p>
-            <p style="margin: 4px 0;"><strong>Avg Urgency:</strong> {(total_urgency / max(count, 1)):.1f}</p>
+        <div style="font-family: 'Plus Jakarta Sans', sans-serif; min-width: 220px; background: #0f172a; color: #f8fafc; padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <div style="background: {color}22; padding: 8px; border-radius: 12px; font-size: 20px;">{icon_emoji}</div>
+                <div>
+                    <p style="margin: 0; font-size: 10px; font-weight: 800; color: {color}; letter-spacing: 1.5px;">CLUSTER #{cluster.get('cluster_id', 0) + 1}</p>
+                    <h4 style="margin: 0; font-weight: 800; font-size: 16px;">{safe_cat}</h4>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px;">
+                <div>
+                    <p style="margin: 0; font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase;">Needs</p>
+                    <p style="margin: 2px 0 0 0; font-weight: 800; font-size: 18px;">{count}</p>
+                </div>
+                <div>
+                    <p style="margin: 0; font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase;">Urgency</p>
+                    <p style="margin: 2px 0 0 0; font-weight: 800; font-size: 18px;">{total_urgency:.1f}</p>
+                </div>
+            </div>
         </div>
         """
 
         folium.CircleMarker(
             location=[lat, lng],
-            radius=max(8, min(count * 3, 25)),
+            radius=max(10, min(count * 4, 35)),
             color=color,
             fill=True,
             fill_color=color,
-            fill_opacity=0.7,
+            fill_opacity=0.85,
+            weight=2,
             popup=folium.Popup(popup_html, max_width=300),
             tooltip=f"{icon_emoji} {str(top_category).title()} — {count} needs",
         ).add_to(m)
 
     # Add individual survey markers if provided
     if surveys:
-        marker_cluster = plugins.MarkerCluster(name="Individual Surveys").add_to(m)
+        marker_cluster = plugins.MarkerCluster(
+            name="Individual Surveys",
+            overlay=True,
+            control=True,
+            icon_create_function=None
+        ).add_to(m)
+        
         for s in surveys:
             loc = s.get("location", {})
             lat = loc.get("latitude")
             lng = loc.get("longitude")
             if lat and lng:
                 cat = s.get("category", "healthcare")
-                color = CATEGORY_COLORS.get(cat, "#718096")
-                desc = str(s.get("description", ""))[:100]
+                color = CATEGORY_COLORS.get(cat, "#00BFA5")
+                desc = str(s.get("description", ""))[:80]
                 popup_html = f"""
-                <div style="font-family: 'Inter', sans-serif;">
-                    <p><strong>{html.escape(str(cat).title(), quote=True)}</strong> | Severity: {html.escape(str(s.get('severity', '?')), quote=True)}</p>
-                    <p>{html.escape(desc, quote=True)}</p>
-                    <p>District: {html.escape(str(s.get('district', 'Unknown')), quote=True)}</p>
-                    <p>Urgency: {float(s.get('urgency_score', 0)):.1f}</p>
+                <div style="font-family: 'Plus Jakarta Sans', sans-serif; padding: 10px; min-width: 150px;">
+                    <p style="margin: 0; font-weight: 800; color: {color}; font-size: 12px;">{str(cat).upper()}</p>
+                    <p style="margin: 4px 0; font-size: 11px; line-height: 1.4; color: #334155;">{html.escape(desc, quote=True)}...</p>
+                    <div style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; color: #64748b; margin-top: 8px;">
+                        <span>{html.escape(str(s.get('district', 'N/A')), quote=True)}</span>
+                        <span style="color: {color}">⭐ {s.get('severity', 0)}</span>
+                    </div>
                 </div>
                 """
                 folium.CircleMarker(
@@ -114,12 +128,13 @@ def generate_folium_map(clusters: List[Dict[str, Any]], surveys: List[Dict[str, 
                     color=color,
                     fill=True,
                     fill_color=color,
-                    fill_opacity=0.5,
+                    fill_opacity=0.6,
+                    weight=1,
                     popup=folium.Popup(popup_html, max_width=250),
                 ).add_to(marker_cluster)
 
     # Add layer control
-    folium.LayerControl().add_to(m)
+    folium.LayerControl(position='topright', collapsed=True).add_to(m)
 
     return m
 

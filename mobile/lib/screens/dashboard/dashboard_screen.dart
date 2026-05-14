@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../providers/survey_provider.dart';
 import '../../widgets/stat_card.dart';
 import '../../widgets/survey_card.dart';
-import '../../models/survey.dart';
 import '../survey/submit_survey_screen.dart';
 import '../volunteer/match_screen.dart';
 import '../survey/survey_list_screen.dart';
@@ -21,191 +22,207 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    if (!mounted) return;
-    context.read<DashboardProvider>().fetchStats();
-    context.read<SurveyProvider>().fetchUrgentNeeds();
+    Future.microtask(() {
+      context.read<DashboardProvider>().fetchStats();
+      context.read<SurveyProvider>().fetchUrgentNeeds();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('VolunteerMap', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Poppins')),
-        actions: [
-          Consumer<DashboardProvider>(
-            builder: (context, provider, child) {
-              return Container(
-                margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: provider.totalSurveys > 0 ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: provider.totalSurveys > 0 ? Colors.green : Colors.red, width: 1),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.circle, size: 8, color: provider.totalSurveys > 0 ? Colors.green : Colors.red),
-                    const SizedBox(width: 6),
-                    Text(
-                      provider.totalSurveys > 0 ? 'LIVE' : 'OFFLINE',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: provider.totalSurveys > 0 ? Colors.green : Colors.red),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          IconButton(icon: const Icon(Icons.notifications_none), onPressed: () {}),
-        ],
-      ),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: RefreshIndicator(
+        color: const Color(0xFF00BFA5),
         onRefresh: () async {
           await context.read<DashboardProvider>().fetchStats();
           await context.read<SurveyProvider>().fetchUrgentNeeds();
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Welcome Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'INTEL OVERVIEW',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF00BFA5),
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      Text(
+                        'System Live',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFF0F172A),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  _buildStatusBadge(),
+                ],
+              ),
+              const SizedBox(height: 32),
+              
               // Stats Row
               Consumer<DashboardProvider>(
                 builder: (context, provider, child) {
                   return Row(
                     children: [
-                      StatCard(title: 'Total Surveys', value: provider.totalSurveys.toString(), color: Colors.blue, icon: Icons.assignment),
+                      StatCard(title: 'Surveys', value: provider.totalSurveys.toString(), color: const Color(0xFF3B82F6), icon: Icons.assignment_rounded),
                       const SizedBox(width: 12),
-                      StatCard(title: 'Active Volunteers', value: provider.activeVolunteers.toString(), color: Colors.green, icon: Icons.people),
+                      StatCard(title: 'Volunteers', value: provider.activeVolunteers.toString(), color: const Color(0xFF10B981), icon: Icons.people_rounded),
                       const SizedBox(width: 12),
-                      StatCard(title: 'Urgent Needs', value: provider.urgentCount.toString(), color: Colors.red, icon: Icons.warning),
+                      StatCard(title: 'Urgent', value: provider.urgentCount.toString(), color: const Color(0xFFF43F5E), icon: Icons.bolt_rounded),
                     ],
                   );
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               
-              // Category Chart
-              const Text('Needs by Category', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Poppins')),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 200,
-                child: Consumer<DashboardProvider>(
-                  builder: (context, provider, child) {
-                    final data = provider.categoryBreakdown;
-                    if (data.isEmpty) return const Center(child: Text('No data available'));
-                    
-                    return BarChart(
-                      BarChartData(
-                        alignment: BarChartAlignment.spaceAround,
-                        maxY: data.values.fold(0, (prev, element) => element > prev ? element : prev).toDouble() + 2,
-                        barGroups: [
-                          _buildBarGroup(0, data['healthcare']?.toDouble() ?? 0, const Color(0xFFEF5350)),
-                          _buildBarGroup(1, data['food']?.toDouble() ?? 0, const Color(0xFFFFA726)),
-                          _buildBarGroup(2, data['education']?.toDouble() ?? 0, const Color(0xFF42A5F5)),
-                          _buildBarGroup(3, data['sanitation']?.toDouble() ?? 0, const Color(0xFF66BB6A)),
-                          _buildBarGroup(4, data['employment']?.toDouble() ?? 0, const Color(0xFFAB47BC)),
-                        ],
-                        titlesData: FlTitlesData(
-                          show: true,
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              getTitlesWidget: (value, meta) {
-                                switch (value.toInt()) {
-                                  case 0: return const Text('Health', style: TextStyle(fontSize: 10));
-                                  case 1: return const Text('Food', style: TextStyle(fontSize: 10));
-                                  case 2: return const Text('Edu', style: TextStyle(fontSize: 10));
-                                  case 3: return const Text('San', style: TextStyle(fontSize: 10));
-                                  case 4: return const Text('Emp', style: TextStyle(fontSize: 10));
-                                  default: return const Text('');
-                                }
-                              },
-                            ),
-                          ),
-                          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        ),
-                        borderData: FlBorderData(show: false),
-                        gridData: const FlGridData(show: false),
-                      ),
-                    );
-                  },
-                ),
-              ),
+              // Intelligence Section
+              _buildSectionHeader('Operational Intelligence', subtitle: 'Real-time category distribution'),
               const SizedBox(height: 24),
+              _buildCategoryChart(),
+              
+              const SizedBox(height: 40),
               
               // Urgent Needs Section
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('🚨 Urgent Needs', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Poppins')),
+                  _buildSectionHeader('Urgent Missions', subtitle: 'Highest priority field needs'),
                   TextButton(
-                    onPressed: () {
-                      // Navigate to Surveys tab (index 2) in the parent HomeScreen
-                      final homeState = context.findAncestorStateOfType<State>();
-                      // Navigate to Survey list screen directly
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const SurveyListScreen()));
-                    },
-                    child: const Text('View all'),
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SurveyListScreen())),
+                    child: Text(
+                      'View all',
+                      style: GoogleFonts.plusJakartaSans(color: const Color(0xFF00BFA5), fontWeight: FontWeight.w800, fontSize: 12),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Consumer<SurveyProvider>(
-                builder: (context, provider, child) {
-                  if (provider.isLoading && provider.urgentNeeds.isEmpty) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: provider.urgentNeeds.length,
-                    itemBuilder: (context, index) {
-                      return SurveyCard(survey: provider.urgentNeeds[index]);
-                    },
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
+              _buildUrgentNeedsList(),
               
-              // Quick Actions
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const SubmitSurveyScreen()),
-                        );
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Submit Survey'),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const MatchScreen()),
-                        );
-                      },
-                      icon: const Icon(Icons.bolt),
-                      label: const Text('Run AI Match'),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.purple, foregroundColor: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 40),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: const Color(0xFF00BFA5).withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(color: Color(0xFF00BFA5), shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'ACTIVE',
+            style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, {required String subtitle}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: const Color(0xFF0F172A), letterSpacing: -0.5),
+        ),
+        Text(
+          subtitle,
+          style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF64748B), fontWeight: FontWeight.w600),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryChart() {
+    return Container(
+      height: 240,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.black.withOpacity(0.03)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20, offset: const Offset(0, 10)),
+        ],
+      ),
+      child: Consumer<DashboardProvider>(
+        builder: (context, provider, child) {
+          final data = provider.categoryBreakdown;
+          if (data.isEmpty) return const Center(child: Text('Analyzing data...'));
+          
+          return BarChart(
+            BarChartData(
+              alignment: BarChartAlignment.spaceAround,
+              maxY: data.values.fold(0, (prev, element) => element > prev ? element : prev).toDouble() + 2,
+              barGroups: [
+                _buildBarGroup(0, data['healthcare']?.toDouble() ?? 0, const Color(0xFFF43F5E)),
+                _buildBarGroup(1, data['food']?.toDouble() ?? 0, const Color(0xFFF59E0B)),
+                _buildBarGroup(2, data['education']?.toDouble() ?? 0, const Color(0xFF3B82F6)),
+                _buildBarGroup(3, data['sanitation']?.toDouble() ?? 0, const Color(0xFF10B981)),
+                _buildBarGroup(4, data['employment']?.toDouble() ?? 0, const Color(0xFFA855F7)),
+              ],
+              titlesData: FlTitlesData(
+                show: true,
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: (value, meta) {
+                      final style = GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: const Color(0xFF64748B));
+                      switch (value.toInt()) {
+                        case 0: return Text('H', style: style);
+                        case 1: return Text('F', style: style);
+                        case 2: return Text('E', style: style);
+                        case 3: return Text('S', style: style);
+                        case 4: return Text('W', style: style);
+                        default: return const Text('');
+                      }
+                    },
+                  ),
+                ),
+                leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              ),
+              borderData: FlBorderData(show: false),
+              gridData: const FlGridData(show: false),
+            ),
+          );
+        },
       ),
     );
   }
@@ -216,23 +233,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
       barRods: [
         BarChartRodData(
           toY: y,
-          gradient: LinearGradient(
-            colors: [color.withOpacity(0.7), color],
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-          ),
-          width: 22,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(6),
-            topRight: Radius.circular(6),
-          ),
-          backDrawRodData: BackgroundBarChartRodData(
-            show: true,
-            toY: 10,
-            color: color.withOpacity(0.08),
-          ),
+          gradient: LinearGradient(colors: [color.withOpacity(0.4), color], begin: Alignment.bottomCenter, end: Alignment.topCenter),
+          width: 16,
+          borderRadius: BorderRadius.circular(8),
+          backDrawRodData: BackgroundBarChartRodData(show: true, toY: 10, color: const Color(0xFFF1F5F9)),
         ),
       ],
+    );
+  }
+
+  Widget _buildUrgentNeedsList() {
+    return Consumer<SurveyProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading && provider.urgentNeeds.isEmpty) {
+          return Shimmer.fromColors(
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+            child: Column(children: List.generate(3, (index) => _buildShimmerItem())),
+          );
+        }
+        if (provider.urgentNeeds.isEmpty) return const Center(child: Text('No urgent needs at this time.'));
+        
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: provider.urgentNeeds.length.clamp(0, 5),
+          itemBuilder: (context, index) => SurveyCard(survey: provider.urgentNeeds[index]),
+        );
+      },
+    );
+  }
+
+  Widget _buildShimmerItem() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      height: 120,
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/match_result.dart';
 
 class MatchResultCard extends StatelessWidget {
@@ -8,91 +9,148 @@ class MatchResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          ),
+        ],
+        border: Border.all(color: Colors.black.withOpacity(0.03)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: _getAvatarColor(match.volunteerName),
-                  child: Text(match.volunteerName[0], style: const TextStyle(color: Colors.white)),
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [_getAvatarColor(match.volunteerName).withOpacity(0.8), _getAvatarColor(match.volunteerName)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _getAvatarColor(match.volunteerName).withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      match.volunteerName[0],
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20),
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(match.volunteerName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                       Text(
-                        match.needCategory.isNotEmpty ? match.needCategory.toUpperCase() : 'GENERAL',
-                        style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+                        match.volunteerName,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 17,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        match.needCategory.toUpperCase(),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10,
+                          color: const Color(0xFF64748B),
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: match.priorityColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    match.priority[0].toUpperCase() + match.priority.substring(1),
-                    style: TextStyle(color: match.priorityColor, fontSize: 10, fontWeight: FontWeight.bold),
-                  ),
-                ),
+                _buildPriorityBadge(),
               ],
             ),
-            const Divider(height: 24),
-
-            // Match Reason
-            const Text('Match Reason:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-            const SizedBox(height: 4),
-            Text(
-              match.matchReason,
-              style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-
-            // AI Matching Basis explanation
+            const SizedBox(height: 24),
+            
+            // AI Insight Box
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.purple.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.purple.withOpacity(0.15)),
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFF00BFA5).withOpacity(0.1)),
               ),
-              child: Row(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.auto_awesome, size: 14, color: Colors.purple[300]),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      match.matchBasis,
-                      style: TextStyle(fontSize: 11, color: Colors.purple[200], fontWeight: FontWeight.w500),
+                  Row(
+                    children: [
+                      const Icon(Icons.auto_awesome_rounded, size: 14, color: Color(0xFF00BFA5)),
+                      const SizedBox(width: 8),
+                      Text(
+                        'AI MATCH INSIGHT',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFF00BFA5),
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    match.matchReason,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF334155),
+                      height: 1.5,
+                      fontStyle: FontStyle.italic,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
-
-            // Chips and View Need button
+            
+            const SizedBox(height: 24),
+            
             Row(
               children: [
-                _buildChip(Icons.straighten, '${match.distance.toStringAsFixed(1)} km', Colors.blue),
-                const SizedBox(width: 8),
-                _buildChip(Icons.star, '${(match.matchScore * 100).toInt()}% Match', Colors.orange),
+                _buildMetricChip(Icons.straighten_rounded, '${match.distance.toStringAsFixed(1)} km', Colors.blue),
+                const SizedBox(width: 12),
+                _buildMetricChip(Icons.offline_bolt_rounded, '${(match.matchScore * 100).toInt()}% CONFIDENCE', const Color(0xFF00BFA5)),
                 const Spacer(),
                 TextButton(
                   onPressed: () => _showNeedDetails(context),
-                  child: const Text('View Need'),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text(
+                    'VIEW DETAILS',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF0F172A),
+                      letterSpacing: 1,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -102,193 +160,130 @@ class MatchResultCard extends StatelessWidget {
     );
   }
 
-  /// Shows a dialog with full details about the matched community need
+  Widget _buildPriorityBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: match.priorityColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        match.priority.toUpperCase(),
+        style: GoogleFonts.plusJakartaSans(
+          color: match.priorityColor,
+          fontSize: 9,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetricChip(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: GoogleFonts.plusJakartaSans(
+              color: color,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showNeedDetails(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.5,
-          minChildSize: 0.3,
-          maxChildSize: 0.8,
-          expand: false,
-          builder: (context, scrollController) {
-            return SingleChildScrollView(
-              controller: scrollController,
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
+          ),
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 60,
+                  height: 6,
+                  decoration: BoxDecoration(color: const Color(0xFFE2E8F0), borderRadius: BorderRadius.circular(3)),
+                ),
+              ),
+              const SizedBox(height: 32),
+              Row(
                 children: [
-                  // Drag handle
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[400],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Title
-                  Row(
-                    children: [
-                      Icon(_getCategoryIcon(), color: _getCategoryColor(), size: 28),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Need Details',
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Category
-                  _buildDetailRow('Category', match.needCategory.isNotEmpty
-                      ? match.needCategory[0].toUpperCase() + match.needCategory.substring(1)
-                      : 'Not specified'),
-                  _buildDetailRow('District', match.needDistrict.isNotEmpty ? match.needDistrict : 'Not specified'),
-                  _buildDetailRow('Priority', match.priority[0].toUpperCase() + match.priority.substring(1)),
-                  _buildDetailRow('Need ID', match.needId),
-                  const SizedBox(height: 16),
-
-                  // Task Summary
-                  const Text('Task Summary', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey)),
-                  const SizedBox(height: 6),
-                  Text(match.taskSummary.isNotEmpty ? match.taskSummary : match.matchReason,
-                      style: const TextStyle(fontSize: 14)),
-                  const SizedBox(height: 20),
-
-                  // Assigned Volunteer
-                  const Text('Assigned Volunteer', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey)),
-                  const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.teal.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.teal.withOpacity(0.2)),
+                      color: _getCategoryColor().withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: _getAvatarColor(match.volunteerName),
-                          radius: 20,
-                          child: Text(match.volunteerName[0], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(match.volunteerName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  _buildChip(Icons.straighten, '${match.distance.toStringAsFixed(1)} km', Colors.blue),
-                                  const SizedBox(width: 8),
-                                  _buildChip(Icons.star, '${(match.matchScore * 100).toInt()}%', Colors.orange),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                    child: Icon(_getCategoryIcon(), color: _getCategoryColor(), size: 28),
                   ),
-                  const SizedBox(height: 20),
-
-                  // AI Matching Explanation
-                  const Text('How AI Matched', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey)),
-                  const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.purple.withOpacity(0.06),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.purple.withOpacity(0.15)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.auto_awesome, size: 16, color: Colors.purple[300]),
-                            const SizedBox(width: 6),
-                            const Text('Gemini AI Analysis', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        _buildFactorRow('🎯 Skill Match', 'Volunteer skills aligned with the need category'),
-                        _buildFactorRow('📍 Proximity', '${match.distance.toStringAsFixed(1)} km from the need location'),
-                        _buildFactorRow('⭐ Match Score', '${(match.matchScore * 100).toInt()}% confidence'),
-                        _buildFactorRow('🔥 Priority', '${match.priority[0].toUpperCase()}${match.priority.substring(1)} urgency level'),
-                        const SizedBox(height: 8),
-                        Text(
-                          match.matchReason,
-                          style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey[400]),
-                        ),
-                      ],
-                    ),
+                  const SizedBox(width: 20),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Mission Intel',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w900, color: const Color(0xFF0F172A), letterSpacing: -1),
+                      ),
+                      Text(
+                        'ID: ${match.needId.toUpperCase()}',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF94A3B8)),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 24),
                 ],
               ),
-            );
-          },
+              const SizedBox(height: 40),
+              _buildDetailItem('CATEGORY', match.needCategory.toUpperCase()),
+              _buildDetailItem('LOCATION', '${match.needDistrict.toUpperCase()}, MAHARASHTRA'),
+              _buildDetailItem('TASK SUMMARY', match.taskSummary.isEmpty ? match.matchReason : match.taskSummary),
+              const Spacer(),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('ACKNOWLEDGE MISSION'),
+              ),
+            ],
+          ),
         );
       },
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailItem(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 90,
-            child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.grey)),
+          Text(
+            label,
+            style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: const Color(0xFF94A3B8), letterSpacing: 1.5),
           ),
-          Expanded(child: Text(value, style: const TextStyle(fontSize: 14))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFactorRow(String emoji, String description) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 13)),
-          const SizedBox(width: 8),
-          Expanded(child: Text(description, style: const TextStyle(fontSize: 12))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChip(IconData icon, String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-      child: Row(
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
-          Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF1E293B)),
+          ),
         ],
       ),
     );
@@ -296,29 +291,29 @@ class MatchResultCard extends StatelessWidget {
 
   IconData _getCategoryIcon() {
     switch (match.needCategory.toLowerCase()) {
-      case 'healthcare': return Icons.local_hospital;
-      case 'food': return Icons.restaurant;
-      case 'education': return Icons.school;
-      case 'sanitation': return Icons.water_drop;
-      case 'employment': return Icons.work;
-      default: return Icons.help_outline;
+      case 'healthcare': return Icons.local_hospital_rounded;
+      case 'food': return Icons.restaurant_rounded;
+      case 'education': return Icons.school_rounded;
+      case 'sanitation': return Icons.water_drop_rounded;
+      case 'employment': return Icons.work_rounded;
+      default: return Icons.help_outline_rounded;
     }
   }
 
   Color _getCategoryColor() {
     switch (match.needCategory.toLowerCase()) {
-      case 'healthcare': return const Color(0xFFEF5350);
-      case 'food': return const Color(0xFFFFA726);
-      case 'education': return const Color(0xFF42A5F5);
-      case 'sanitation': return const Color(0xFF66BB6A);
-      case 'employment': return const Color(0xFFAB47BC);
-      default: return Colors.teal;
+      case 'healthcare': return const Color(0xFFF43F5E);
+      case 'food': return const Color(0xFFF59E0B);
+      case 'education': return const Color(0xFF3B82F6);
+      case 'sanitation': return const Color(0xFF10B981);
+      case 'employment': return const Color(0xFFA855F7);
+      default: return const Color(0xFF00BFA5);
     }
   }
 
   Color _getAvatarColor(String name) {
     final int hash = name.hashCode;
-    final List<Color> colors = [Colors.teal, Colors.blue, Colors.purple, Colors.orange, Colors.indigo];
+    final List<Color> colors = [const Color(0xFF00BFA5), const Color(0xFF3B82F6), const Color(0xFFA855F7), const Color(0xFFF59E0B), const Color(0xFFF43F5E)];
     return colors[hash.abs() % colors.length];
   }
 }

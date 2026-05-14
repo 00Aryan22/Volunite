@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
@@ -12,26 +13,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isPasswordVisible = false;
-
-  void _handleLogin() async {
-    final success = await context.read<AuthProvider>().login(
-      _emailController.text,
-      _passwordController.text,
-    );
-
-    if (success && mounted) {
-      Navigator.pushReplacementNamed(context, '/home');
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid credentials. Try: admin@volunite.app / admin123'),
-          backgroundColor: Color(0xFF006064),
-        ),
-      );
-    }
-  }
-
   void _handleMockSocial(String type) async {
     showDialog(
       context: context,

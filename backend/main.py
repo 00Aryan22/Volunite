@@ -174,15 +174,20 @@ async def login(credentials: LoginCredentials):
 
 @app.delete("/volunteers/{volunteer_id}", tags=["Volunteers"])
 async def remove_volunteer(volunteer_id: str):
-    """Remove a volunteer profile."""
-    success = delete_volunteer(volunteer_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Volunteer not found")
-    return {"status": "success", "message": "Volunteer deleted"}
+    """Remove a volunteer profile from the database."""
+    try:
+        delete_volunteer(volunteer_id)
+        return {"message": "Volunteer removed successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to remove volunteer: {str(e)}",
+        )
+
 
 @app.get("/", tags=["System"], response_class=HTMLResponse)
 async def root():
-    """Interactive Web Dashboard — Volunite Community Intelligence Platform."""
+    """Interactive Web Dashboard - Volunite Community Intelligence Platform."""
     return """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -199,155 +204,277 @@ async def root():
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
+    :root {
+        --primary: #00BFA5;
+        --secondary: #006064;
+        --accent: #f43f5e;
+        --bg-deep: #020617;
+        --glass-bg: rgba(15, 23, 42, 0.6);
+        --glass-border: rgba(255, 255, 255, 0.08);
+    }
     body { 
         font-family: 'Plus Jakarta Sans', sans-serif; 
-        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-        color: #f9fafb; 
+        background: radial-gradient(circle at 0% 0%, #0f172a 0%, #020617 100%);
+        color: #f1f5f9; 
         min-height: 100vh;
+        overflow-x: hidden;
     }
-    .sidebar-gradient { background: rgba(15, 12, 41, 0.95); backdrop-filter: blur(10px); border-right: 1px solid rgba(255,255,255,0.05); }
-    .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
-    .nav-item { transition: all 0.2s ease; cursor: pointer; border-radius: 12px; color: rgba(255,255,255,0.6); }
-    .nav-item:hover { background: rgba(255, 255, 255, 0.1); color: white; }
-    .nav-item.active { background: rgba(255, 255, 255, 0.15); color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-    .tab-content { display: none; animation: fadeIn 0.4s ease; }
-    .tab-content.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    #map { height: 400px; border-radius: 24px; z-index: 10; border: 1px solid rgba(255,255,255,0.1); }
-    .leaflet-tile { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
-    .leaflet-container { background: #020617 !important; }
+    .glass { 
+        background: var(--glass-bg); 
+        backdrop-filter: blur(16px); 
+        border: 1px solid var(--glass-border); 
+        box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5); 
+    }
+    .sidebar-gradient { 
+        background: rgba(2, 6, 23, 0.8); 
+        backdrop-filter: blur(24px); 
+        border-right: 1px solid var(--glass-border); 
+    }
+    .nav-item { 
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        cursor: pointer; 
+        border-radius: 16px; 
+        color: #94a3b8; 
+    }
+    .nav-item:hover { 
+        background: rgba(0, 191, 165, 0.1); 
+        color: var(--primary);
+        padding-left: 1.5rem;
+    }
+    .nav-item.active { 
+        background: linear-gradient(90deg, rgba(0, 191, 165, 0.15) 0%, transparent 100%); 
+        color: var(--primary); 
+        border-left: 3px solid var(--primary);
+        border-radius: 0 16px 16px 0;
+    }
+    .tab-content { display: none; opacity: 0; transform: translateY(20px); transition: all 0.5s ease-out; }
+    .tab-content.active { display: block; opacity: 1; transform: translateY(0); }
+    #map { 
+        height: 480px; 
+        border-radius: 32px; 
+        z-index: 10; 
+        border: 1px solid var(--glass-border); 
+        box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.7);
+    }
+    .leaflet-container { background: var(--bg-deep) !important; }
     #login-overlay { 
         position: fixed; inset: 0; z-index: 9999; 
-        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        background: var(--bg-deep);
         display: flex; align-items: center; justify-content: center; 
     }
-    .btn-cosmic { background: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%); transition: all 0.3s ease; }
-    .btn-cosmic:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0, 210, 255, 0.4); }
+    .btn-premium { 
+        background: linear-gradient(135deg, #00BFA5 0%, #00897B 100%); 
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .btn-premium:hover { 
+        transform: translateY(-4px) scale(1.02); 
+        box-shadow: 0 15px 30px -10px rgba(0, 191, 165, 0.5); 
+    }
+    .skeleton {
+        background: linear-gradient(90deg, #0f172a 25%, #1e293b 50%, #0f172a 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite linear;
+    }
+    @keyframes loading {
+        to { background-position: -200% 0; }
+    }
+    .pulse-glow {
+        animation: pulse-glow 2s infinite ease-in-out;
+    }
+    @keyframes pulse-glow {
+        0%, 100% { opacity: 0.5; filter: blur(2px); }
+        50% { opacity: 1; filter: blur(0px); }
+    }
 </style>
 </head>
-<body class="antialiased">
+<body class="antialiased text-slate-200">
     <!-- Login Overlay -->
     <div id="login-overlay">
-        <div class="glass p-12 rounded-[48px] w-full max-w-md space-y-10 border-white/10 text-center">
+        <div class="glass p-12 rounded-[48px] w-full max-w-md space-y-10 text-center border-teal-500/10">
             <div class="space-y-4">
-                <div class="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto shadow-2xl" style="background: linear-gradient(135deg, #00BFA5, #006064);">
-                    <i class="fa-solid fa-map-pin text-4xl text-white"></i>
+                <div class="w-24 h-24 rounded-[32px] flex items-center justify-center mx-auto shadow-[0_20px_50px_rgba(0,191,165,0.3)]" style="background: linear-gradient(135deg, #00BFA5, #006064);">
+                    <i class="fa-solid fa-map-pin text-5xl text-white"></i>
                 </div>
-                <div class="space-y-1">
-                    <h2 class="text-3xl font-black text-white tracking-tight">Volunite</h2>
-                    <p class="text-[10px] font-black uppercase tracking-[0.2em]" style="color:#00BFA5;">Unite. Serve. Impact.</p>
+                <div>
+                    <h2 class="text-4xl font-extrabold text-white tracking-tighter">Volunite</h2>
+                    <p class="text-[10px] font-black uppercase tracking-[0.4em] text-teal-400 mt-2">Unite. Serve. Impact.</p>
                 </div>
             </div>
             
             <div class="space-y-4">
-                <button onclick="mockGoogleLogin()" class="w-full flex items-center justify-center gap-3 bg-white text-black py-4 rounded-2xl font-bold hover:bg-gray-100 transition-all shadow-lg">
-                    <img src="https://www.google.com/favicon.ico" class="w-5 h-5"> Sign in with Google
-                </button>
-                <button onclick="showPhoneLogin()" class="w-full flex items-center justify-center gap-3 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 py-4 rounded-2xl font-bold hover:bg-indigo-600/30 transition-all">
-                    <i class="fa-solid fa-phone"></i> Mobile Number Login
-                </button>
-                <div class="relative py-2">
-                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-white/5"></div></div>
-                    <div class="relative flex justify-center text-[10px] uppercase font-black text-gray-500 px-4">OR EMAIL ACCOUNT</div>
-                </div>
                 <div class="space-y-3">
-                    <input id="login-email" type="text" placeholder="Email or Phone Number" class="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm focus:border-indigo-500 focus:bg-white/10 outline-none transition-all placeholder:text-gray-600">
-                    <input id="login-pass" type="password" placeholder="Password" class="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm focus:border-indigo-500 focus:bg-white/10 outline-none transition-all placeholder:text-gray-600">
-                    <button onclick="handleEmailLogin()" class="w-full py-5 btn-cosmic text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl shadow-blue-500/20 mt-4">Access Volunite Portal</button>
+                    <input id="login-email" type="text" placeholder="Admin ID or Phone" class="w-full bg-slate-900/50 border border-slate-800 rounded-2xl p-5 text-sm focus:border-teal-500 outline-none transition-all placeholder:text-slate-500 text-white font-medium">
+                    <input id="login-pass" type="password" placeholder="Access Code" class="w-full bg-slate-900/50 border border-slate-800 rounded-2xl p-5 text-sm focus:border-teal-500 outline-none transition-all placeholder:text-slate-500 text-white font-medium">
+                    <button onclick="handleEmailLogin()" class="w-full py-5 btn-premium text-white rounded-2xl font-bold text-sm uppercase tracking-[0.2em] mt-4 shadow-xl">Enter Volunite Portal</button>
                 </div>
             </div>
             
-            <div class="p-6 bg-white/5 rounded-3xl border border-white/10">
-                <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-3">Demo Access Codes</p>
-                <div class="grid grid-cols-1 gap-2 text-[10px] text-gray-400 font-bold">
-                    <div class="flex justify-between px-2"><span>Admin:</span> <span class="text-white">admin@volunite.app / admin123</span></div>
-                    <div class="flex justify-between px-2 border-t border-white/5 pt-2"><span>Mobile:</span> <span class="text-white">+919999999999 / 123456</span></div>
-                </div>
+            <div class="p-6 bg-slate-950/50 rounded-3xl border border-slate-800">
+                <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Demo Auth</p>
+                <code class="text-xs text-teal-400/90 font-bold">admin@volunite.app / admin123</code>
             </div>
         </div>
     </div>
 
-    <!-- Main Dashboard Container -->
+    <!-- Main Dashboard -->
     <div id="main-dashboard" class="flex h-screen overflow-hidden hidden">
-        <!-- Sidebar -->
-        <aside class="w-72 sidebar-gradient flex flex-col p-6 space-y-8">
-            <div class="flex items-center gap-3 px-2">
-                <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #00BFA5, #006064);">
-                    <i class="fa-solid fa-map-pin text-xl text-white"></i>
+        <aside class="w-80 sidebar-gradient flex flex-col p-8 space-y-10">
+            <div class="flex items-center gap-4 px-2">
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg" style="background: linear-gradient(135deg, #00BFA5, #006064);">
+                    <i class="fa-solid fa-map-pin text-2xl text-white"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight text-white">Volunite</h1>
-                    <p class="text-[10px] text-white/50 font-bold tracking-widest uppercase">Unite. Serve. Impact.</p>
+                    <h1 class="text-2xl font-black tracking-tighter text-white">Volunite</h1>
+                    <p class="text-[9px] text-teal-500 font-black uppercase tracking-[0.3em]">AI Intelligence</p>
                 </div>
             </div>
 
-            <nav class="flex-1 space-y-1">
-                <div onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item active flex items-center gap-3 px-4 py-3 text-sm font-medium">
-                    <i class="fa-solid fa-chart-pie w-5 text-red-500"></i> Dashboard
+            <nav class="flex-1 space-y-3">
+                <div onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item active flex items-center gap-4 px-5 py-4 text-sm font-bold">
+                    <i class="fa-solid fa-grid-2 w-5"></i> Dashboard
                 </div>
-                <div onclick="switchTab('surveys')" id="nav-surveys" class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium">
-                    <i class="fa-solid fa-clipboard-list w-5 text-amber-500"></i> Community Surveys
+                <div onclick="switchTab('surveys')" id="nav-surveys" class="nav-item flex items-center gap-4 px-5 py-4 text-sm font-bold">
+                    <i class="fa-solid fa-file-invoice w-5 text-amber-500"></i> Field Surveys
                 </div>
-                <div onclick="switchTab('volunteers')" id="nav-volunteers" class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium">
-                    <i class="fa-solid fa-users w-5 text-blue-500"></i> Volunteers
+                <div onclick="switchTab('volunteers')" id="nav-volunteers" class="nav-item flex items-center gap-4 px-5 py-4 text-sm font-bold">
+                    <i class="fa-solid fa-users-medical w-5 text-blue-500"></i> Responders
                 </div>
-                <div onclick="switchTab('matching')" id="nav-matching" class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium">
-                    <i class="fa-solid fa-wand-magic-sparkles w-5 text-indigo-500"></i> AI Matching
-                </div>
-                <div onclick="switchTab('register')" id="nav-register" class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium">
-                    <i class="fa-solid fa-user-plus w-5 text-teal-500"></i> Registration
+                <div onclick="switchTab('matching')" id="nav-matching" class="nav-item flex items-center gap-4 px-5 py-4 text-sm font-bold">
+                    <i class="fa-solid fa-sparkles w-5 text-purple-500"></i> Smart Match
                 </div>
             </nav>
 
-            <div class="pt-6 border-t border-white/10">
-                <div onclick="logout()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-400 hover:text-white cursor-pointer transition-colors">
-                    <i class="fa-solid fa-power-off w-5 text-rose-500"></i> Sign Out
+            <div class="pt-8 border-t border-slate-800">
+                <div onclick="logout()" class="flex items-center gap-4 px-5 py-4 text-sm font-bold text-slate-400 hover:text-rose-400 cursor-pointer transition-all">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
                 </div>
             </div>
         </aside>
 
-        <!-- Main Content (Rest of dashboard same as before...) -->
-        <main class="flex-1 overflow-y-auto bg-[#020617] p-8">
-            <header class="flex justify-between items-center mb-8">
+        <main class="flex-1 overflow-y-auto p-12 bg-transparent">
+            <header class="flex justify-between items-center mb-12">
                 <div>
-                    <h2 id="page-title" class="text-3xl font-extrabold flex items-center gap-3">
-                        <span id="page-icon">📊</span> <span id="page-text">Dashboard</span>
+                    <h2 id="page-title" class="text-4xl font-black text-white tracking-tighter flex items-center gap-3">
+                        Dashboard
                     </h2>
-                    <p id="page-subtitle" class="text-gray-500 text-sm mt-1">Real-time intelligence on community needs across Maharashtra</p>
+                    <p id="page-subtitle" class="text-slate-300 text-sm mt-2 font-semibold">Real-time community needs intelligence</p>
                 </div>
-                <div id="user-profile" class="flex items-center gap-4 bg-white/5 border border-white/10 px-5 py-2.5 rounded-2xl">
+                <div class="flex items-center gap-5 glass px-8 py-4 rounded-3xl border-teal-500/10">
                     <div class="text-right">
-                        <p id="user-name" class="text-xs font-bold text-white">--</p>
-                        <p id="user-role" class="text-[9px] font-black text-teal-500 uppercase">--</p>
+                        <p id="user-name" class="text-sm font-extrabold text-white">--</p>
+                        <p id="user-role" class="text-[10px] font-black text-teal-400 uppercase tracking-widest">--</p>
                     </div>
-                    <div class="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center font-black text-white shadow-xl shadow-indigo-500/20" id="user-initial">A</div>
+                    <div class="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center font-black text-teal-400 border border-slate-700 text-xl" id="user-initial">V</div>
                 </div>
             </header>
             
-            <!-- Dashboard Tab (rest of HTML injected same as before...) -->
-            <div id="tab-dashboard" class="tab-content active space-y-8">
-                <div class="flex gap-12 border-b border-gray-900 pb-8">
-                    <div><p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">📋 Total Surveys</p><p class="text-5xl font-black text-white" id="stat-total-surveys">--</p></div>
-                    <div><p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">👥 Active Volunteers</p><p class="text-5xl font-black text-white" id="stat-active-volunteers">--</p></div>
-                    <div><p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">🚨 Urgent Needs</p><p class="text-5xl font-black text-rose-500" id="stat-urgent-needs">--</p></div>
-                    <div><p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">📈 Avg Urgency</p><p class="text-5xl font-black text-white" id="stat-avg-urgency">--</p></div>
+            <!-- Dashboard Tab -->
+            <div id="tab-dashboard" class="tab-content active space-y-12">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <div class="glass p-8 rounded-[32px] group hover:border-teal-500/30 transition-all cursor-default">
+                        <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Total Surveys</p>
+                        <p class="text-5xl font-black text-white tracking-tighter" id="stat-total-surveys">--</p>
+                    </div>
+                    <div class="glass p-8 rounded-[32px] group hover:border-blue-500/30 transition-all cursor-default">
+                        <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Active Volunteers</p>
+                        <p class="text-5xl font-black text-white tracking-tighter" id="stat-active-volunteers">--</p>
+                    </div>
+                    <div class="glass p-8 rounded-[32px] group hover:border-rose-500/30 transition-all cursor-default">
+                        <p class="text-[10px] text-rose-400 font-black uppercase tracking-widest mb-2">Urgent Needs</p>
+                        <p class="text-5xl font-black text-rose-400 tracking-tighter" id="stat-urgent-needs">--</p>
+                    </div>
+                    <div class="glass p-8 rounded-[32px] group hover:border-purple-500/30 transition-all cursor-default">
+                        <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Avg Urgency</p>
+                        <p class="text-5xl font-black text-white tracking-tighter" id="stat-avg-urgency">--</p>
+                    </div>
                 </div>
-                <div class="space-y-4">
-                    <h3 class="text-xl font-bold flex items-center gap-2">🗺️ Needs Hotspot Map</h3>
-                    <div id="map"></div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="flex justify-between items-center px-2">
+                            <h3 class="text-2xl font-black text-white flex items-center gap-3">
+                                <i class="fa-solid fa-map-location-dot text-teal-500"></i> Impact Hotspots
+                            </h3>
+                            <button onclick="updateMap()" class="text-xs font-black text-teal-400 uppercase tracking-widest hover:text-teal-300 flex items-center gap-2">
+                                <i class="fa-solid fa-rotate"></i> Sync Live
+                            </button>
+                        </div>
+                        <div id="map"></div>
+                    </div>
+                    <div class="space-y-6">
+                        <h3 class="text-2xl font-black text-white flex items-center gap-3 px-2">
+                            <i class="fa-solid fa-fire-flame-curved text-rose-500"></i> Priorities
+                        </h3>
+                        <div id="urgent-list" class="space-y-4">
+                            <!-- Skeleton loaders would go here -->
+                        </div>
+                    </div>
                 </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="glass p-8 rounded-[32px]"><h3 class="text-lg font-bold mb-6">Needs by Category</h3><div class="h-64"><canvas id="categoryChart"></canvas></div></div>
-                    <div class="glass p-8 rounded-[32px]"><h3 class="text-lg font-bold mb-6">Critical Hotspots</h3><div id="urgent-list" class="space-y-3"></div></div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                    <div class="glass p-10 rounded-[40px]">
+                        <h3 class="text-xl font-black mb-8 text-white flex items-center gap-3">
+                            <i class="fa-solid fa-chart-simple text-blue-500"></i> Category Breakdown
+                        </h3>
+                        <div class="h-64"><canvas id="categoryChart"></canvas></div>
+                    </div>
+                    <div class="glass p-10 rounded-[40px]">
+                        <h3 class="text-xl font-black mb-8 text-white flex items-center gap-3">
+                            <i class="fa-solid fa-clock-rotate-left text-amber-500"></i> Recent Activity
+                        </h3>
+                        <div id="activity-list" class="space-y-5">
+                             <!-- Activity items -->
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div id="tab-surveys" class="tab-content glass rounded-3xl overflow-hidden"><table class="w-full text-left"><thead class="bg-white/5 border-b border-white/10 text-[10px] font-bold uppercase tracking-widest text-gray-500"><tr><th class="px-8 py-4">District</th><th class="px-4 py-4">Category</th><th class="px-4 py-4">Score</th><th class="px-4 py-4">Affected</th></tr></thead><tbody id="surveys-table-body" class="text-sm"></tbody></table></div>
-            <div id="tab-volunteers" class="tab-content">
-                <div id="volunteers-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+            <!-- Surveys Tab -->
+            <div id="tab-surveys" class="tab-content">
+                <div class="glass rounded-[40px] overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-900/80 border-b border-slate-800 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
+                            <tr>
+                                <th class="px-10 py-6">Geographic District</th>
+                                <th class="px-8 py-6">Need Category</th>
+                                <th class="px-8 py-6 text-center">Urgency</th>
+                                <th class="px-8 py-6 text-right">People Affected</th>
+                            </tr>
+                        </thead>
+                        <tbody id="surveys-table-body" class="text-sm font-semibold">
+                            <!-- Rows -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div id="tab-matching" class="tab-content space-y-8"><div class="glass p-12 rounded-[40px] text-center space-y-6 border-indigo-500/20"><div class="w-20 h-20 bg-indigo-500 text-white rounded-[28px] flex items-center justify-center mx-auto text-3xl shadow-2xl shadow-indigo-500/30"><i class="fa-solid fa-bolt-lightning"></i></div><h3 class="text-2xl font-bold">AI Matching Engine</h3><button id="btn-run-match" onclick="runAIMatch()" class="bg-indigo-500 text-white px-12 py-4 rounded-2xl font-bold hover:scale-105 transition-all">🚀 Run AI Matching</button><div id="matching-loader" class="hidden animate-pulse text-indigo-400 font-bold">AI is analyzing community needs...</div></div><div id="matches-results" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20"></div></div>
-            <div id="tab-register" class="tab-content max-w-xl mx-auto glass p-10 rounded-[32px]"><h3 class="text-xl font-bold mb-8">📝 Submit New Survey</h3><form id="survey-form" onsubmit="event.preventDefault(); submitNewSurvey();" class="space-y-6"><select name="district" required class="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm"><option value="Sangli">Sangli</option><option value="Pune">Pune</option><option value="Kolhapur">Kolhapur</option><option value="Solapur">Solapur</option><option value="Nashik">Nashik</option></select><select name="category" required class="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm"><option value="healthcare">Healthcare</option><option value="food">Food</option><option value="education">Education</option><option value="sanitation">Sanitation</option></select><textarea name="description" required class="w-full h-32 bg-white/5 border border-white/10 rounded-xl p-4 text-sm" placeholder="Detailed description..."></textarea><button type="submit" class="w-full py-4 bg-teal-500 text-white rounded-2xl font-bold shadow-xl shadow-teal-500/20">Submit to Cloud</button></form></div>
+
+            <!-- Volunteers Tab -->
+            <div id="tab-volunteers" class="tab-content">
+                <div id="volunteers-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
+            </div>
+
+            <!-- AI Matching Tab -->
+            <div id="tab-matching" class="tab-content space-y-10 pb-20">
+                <div class="glass p-16 rounded-[48px] text-center space-y-8 border-teal-500/20 relative overflow-hidden">
+                    <div class="absolute -top-24 -left-24 w-64 h-64 bg-teal-500/10 rounded-full blur-[80px]"></div>
+                    <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px]"></div>
+                    
+                    <div class="w-24 h-24 bg-gradient-to-br from-teal-400 to-teal-600 text-white rounded-[32px] flex items-center justify-center mx-auto text-4xl shadow-2xl shadow-teal-500/30 relative">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div class="max-w-xl mx-auto space-y-3">
+                        <h3 class="text-3xl font-black text-white tracking-tighter">Gemini Intelligence Matching</h3>
+                        <p class="text-slate-300 font-semibold">Auto-assign the best volunteers to the most critical community needs based on location, skills, and urgency metrics.</p>
+                    </div>
+                    <button id="btn-run-match" onclick="runAIMatch()" class="bg-teal-500 text-white px-16 py-5 rounded-[20px] font-black text-sm uppercase tracking-widest hover:scale-105 transition-all shadow-[0_20px_40px_rgba(0,191,165,0.3)]">Optimize Operations</button>
+                    
+                    <div id="matching-loader" class="hidden flex flex-col items-center gap-4">
+                        <div class="w-12 h-12 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div>
+                        <p class="text-teal-400 font-black text-[10px] tracking-[0.4em] uppercase pulse-glow">Analyzing Human Capital Data...</p>
+                    </div>
+                </div>
+                <div id="matches-results" class="grid grid-cols-1 md:grid-cols-2 gap-8"></div>
+            </div>
         </main>
     </div>
 
@@ -361,31 +488,8 @@ async def root():
             performLogin(identity, password);
         }
 
-        async function mockGoogleLogin() {
-            const btn = document.querySelector('button[onclick="mockGoogleLogin()"]');
-            const original = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> Connecting...';
-            btn.disabled = true;
-            
-            setTimeout(() => {
-                btn.innerHTML = original;
-                btn.disabled = false;
-                performLogin('google_demo', 'google');
-            }, 1000);
-        }
-
-        async function showPhoneLogin() {
-            const phone = prompt('📞 Enter demo mobile number:', '+919999999999');
-            if (!phone) return;
-            const code = prompt('🔑 Enter 6-digit OTP:', '123456');
-            if (phone && code) performLogin(phone, code);
-        }
-
         async function performLogin(identity, password) {
-            // Normalize legacy volunteermap.org demo emails
             if (identity === 'admin@volunteermap.org') identity = 'admin@volunite.app';
-            if (identity === 'sangli_lead@volunteermap.org') identity = 'sangli_lead@volunite.app';
-            if (identity === 'pune_lead@volunteermap.org') identity = 'pune_lead@volunite.app';
             try {
                 const res = await fetch('/auth/login', {
                     method: 'POST',
@@ -393,21 +497,19 @@ async def root():
                     body: JSON.stringify({ identity, password })
                 });
                 
-                if (!res.ok) {
-                    const errData = await res.json();
-                    throw new Error(errData.detail || 'Authentication failed');
-                }
+                if (!res.ok) throw new Error('Unauthorized Access');
                 
                 const user = await res.json();
-                console.log('Login successful:', user.name);
                 currentUser = user;
-                localStorage.setItem('vm_user', JSON.stringify(user));
-                document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('main-dashboard').style.display = 'flex';
-                initDashboard();
+                localStorage.setItem('vn_user_v2', JSON.stringify(user));
+                document.getElementById('login-overlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('login-overlay').style.display = 'none';
+                    document.getElementById('main-dashboard').style.display = 'flex';
+                    initDashboard();
+                }, 500);
             } catch (e) { 
-                console.error('Auth Error:', e);
-                alert('❌ Login Failed: ' + e.message); 
+                alert('Authentication Failed: ' + e.message); 
             }
         }
 
@@ -420,25 +522,24 @@ async def root():
         }
 
         function logout() {
-            localStorage.removeItem('vm_user');
+            localStorage.removeItem('vn_user_v2');
             window.location.reload();
         }
 
-        // ... initMap, updateMap, switchTab, fetchData, updateChart, fetchUrgent, etc. same as before ...
         function initMap() {
             if (map) return;
-            map = L.map('map', { zoomControl: false }).setView([18.5204, 73.8567], 7);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Volunite'
+            map = L.map('map', { zoomControl: false, scrollWheelZoom: false }).setView([18.5204, 73.8567], 7);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; CartoDB | OpenStreetMap'
             }).addTo(map);
             L.control.zoom({ position: 'bottomright' }).addTo(map);
         }
 
-        const CATEGORY_COLORS = {
+        const COLORS = {
             healthcare: '#f43f5e', food: '#f59e0b',
             education: '#3b82f6', sanitation: '#10b981', employment: '#a855f7'
         };
-        const CATEGORY_ICONS = {
+        const ICONS = {
             healthcare: '🏥', food: '🍚', education: '📚', sanitation: '🚿', employment: '💼'
         };
 
@@ -446,60 +547,50 @@ async def root():
             try {
                 const res = await fetch('/surveys/clusters');
                 const data = await res.json();
+                map.eachLayer((layer) => { if (layer instanceof L.Marker || layer instanceof L.CircleMarker) map.removeLayer(layer); });
+                
                 (data.clusters || []).forEach(c => {
-                    const color = CATEGORY_COLORS[c.top_category] || '#00BFA5';
-                    const icon = CATEGORY_ICONS[c.top_category] || '📍';
-                    const radius = Math.max(10, Math.min(c.count * 4, 35));
+                    const color = COLORS[c.top_category] || '#00BFA5';
+                    const icon = ICONS[c.top_category] || '📍';
+                    const radius = Math.max(12, Math.min(c.count * 5, 40));
                     L.circleMarker([c.centroid.lat, c.centroid.lng], {
                         radius, fillColor: color, color: '#fff',
-                        weight: 2, fillOpacity: 0.85
+                        weight: 2.5, fillOpacity: 0.85
                     })
                     .addTo(map)
-                    .bindPopup(`<div style="font-family:sans-serif;min-width:160px">
-                        <b style="color:${color}">${icon} ${(c.top_category||'').toUpperCase()}</b><br>
-                        <b>Cluster #${c.cluster_id + 1}</b><br>
-                        Needs: <b>${c.count}</b><br>
-                        Total Urgency: <b>${c.total_urgency.toFixed(1)}</b>
+                    .bindPopup(`<div style="font-family:'Plus Jakarta Sans',sans-serif;min-width:180px;color:#0f172a;padding:5px">
+                        <p style="margin:0;font-size:10px;font-weight:900;text-transform:uppercase;color:${color}">${icon} ${c.top_category}</p>
+                        <h4 style="margin:4px 0;font-weight:800">Cluster #${c.cluster_id + 1}</h4>
+                        <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;border-top:1px solid #eee;margin-top:8px;padding-top:8px">
+                            <span>NEEDS: <b>${c.count}</b></span>
+                            <span>URGENCY: <b>${c.total_urgency.toFixed(1)}</b></span>
+                        </div>
                     </div>`);
                 });
-                // Individual survey markers
-                const sRes = await fetch('/surveys/all');
-                const sData = await sRes.json();
-                (sData.surveys || []).forEach(s => {
-                    const loc = s.location || {};
-                    if (!loc.latitude || !loc.longitude) return;
-                    const color = CATEGORY_COLORS[s.category] || '#00BFA5';
-                    L.marker([loc.latitude, loc.longitude])
-                    .addTo(map)
-                    .bindPopup(`<div style="font-family:sans-serif;min-width:160px">
-                        <b style="color:${color}">${s.district}</b><br>
-                        <small style="color:#666;text-transform:uppercase">${s.category}</small><br>
-                        Affected: <b>${s.affected_count}</b><br>
-                        Urgency: <b>${Number(s.urgency_score||0).toFixed(1)}</b>
-                    </div>`);
-                });
-            } catch(e) { console.warn('Map update error:', e); }
+            } catch(e) { console.warn('Map Error:', e); }
         }
 
         function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(t => { t.classList.remove('active'); });
+            
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active');
+            
+            const activeTab = document.getElementById('tab-' + tabId);
+            activeTab.style.display = 'block';
+            setTimeout(() => { activeTab.classList.add('active'); }, 10);
+            
             document.getElementById('nav-' + tabId).classList.add('active');
             
-            const titles = {
-                'dashboard': ['📊', 'Dashboard', 'Real-time intelligence on community needs'],
-                'surveys': ['📋', 'Community Surveys', 'Detailed record of submitted field reports'],
-                'volunteers': ['👥', 'Volunteers', 'Manage and track available community responders'],
-                'matching': ['🪄', 'AI Matching', 'Intelligent task assignment via Gemini'],
-                'register': ['📝', 'Registration', 'Directly enter new field data into the cloud']
+            const meta = {
+                'dashboard': ['Dashboard', 'Intelligence for social impact'],
+                'surveys': ['Field Surveys', 'Ground-level data collection'],
+                'volunteers': ['Responders', 'Mobile workforce management'],
+                'matching': ['Smart Match', 'Algorithmic task allocation']
             };
             
-            if (titles[tabId]) {
-                document.getElementById('page-icon').innerText = titles[tabId][0];
-                document.getElementById('page-text').innerText = titles[tabId][1];
-                document.getElementById('page-subtitle').innerText = titles[tabId][2];
-            }
+            document.getElementById('page-title').innerText = meta[tabId][0];
+            document.getElementById('page-subtitle').innerText = meta[tabId][1];
 
             if (tabId === 'dashboard') { setTimeout(() => map.invalidateSize(), 100); fetchData(); }
             if (tabId === 'surveys') fetchSurveys();
@@ -510,9 +601,9 @@ async def root():
             const res = await fetch('/dashboard/stats');
             const data = await res.json();
             document.getElementById('stat-total-surveys').innerText = data.total_surveys;
-            document.getElementById('stat-active-volunteers').innerText = data.active_volunteers || data.total_volunteers;
-            document.getElementById('stat-urgent-needs').innerText = data.urgent_needs || data.urgent_count;
-            document.getElementById('stat-avg-urgency').innerText = (data.avg_urgency || 0).toFixed(1);
+            document.getElementById('stat-active-volunteers').innerText = data.active_volunteers;
+            document.getElementById('stat-urgent-needs').innerText = data.urgent_needs;
+            document.getElementById('stat-avg-urgency').innerText = data.avg_urgency.toFixed(1);
             updateChart(data.category_breakdown);
             updateMap();
             fetchUrgent();
@@ -521,21 +612,58 @@ async def root():
         function updateChart(data) {
             const ctx = document.getElementById('categoryChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(data).map(k => k.toUpperCase()), datasets: [{ data: Object.values(data), backgroundColor: ['#f43f5e', '#f59e0b', '#3b82f6', '#10b981'], borderRadius: 12 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false }, ticks: { color: '#4b5563', font: { weight: 'bold' } } } } } });
+            chartInstance = new Chart(ctx, { 
+                type: 'bar', 
+                data: { 
+                    labels: Object.keys(data).map(k => k.toUpperCase()), 
+                    datasets: [{ 
+                        data: Object.values(data), 
+                        backgroundColor: ['#f43f5e', '#f59e0b', '#3b82f6', '#10b981', '#a855f7'], 
+                        borderRadius: 12,
+                        barThickness: 35
+                    }] 
+                }, 
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { 
+                        y: { display: false }, 
+                        x: { grid: { display: false }, ticks: { color: '#64748b', font: { weight: '800', size: 10 } } } 
+                    } 
+                } 
+            });
         }
 
         async function fetchUrgent() {
             const res = await fetch('/surveys/urgent');
             const data = await res.json();
             const list = document.getElementById('urgent-list'); list.innerHTML = '';
-            (data.urgent_needs || []).slice(0, 4).forEach(n => { list.innerHTML += `<div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/5"><div class="flex gap-3 items-center"><div class="w-2 h-2 bg-rose-500 rounded-full animate-pulse"></div><div><p class="text-sm font-bold">${n.district}</p><p class="text-[10px] text-gray-500 font-bold uppercase">${n.category}</p></div></div><p class="text-lg font-black">${n.urgency_score.toFixed(0)}</p></div>`; });
+            (data.urgent_needs || []).slice(0, 5).forEach(n => { 
+                list.innerHTML += `<div class="glass p-6 rounded-3xl flex justify-between items-center border-l-4 border-rose-500 hover:scale-[1.02] transition-transform">
+                    <div class="flex gap-4 items-center">
+                        <div class="w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(244,63,94,0.5)]"></div>
+                        <div>
+                            <p class="text-sm font-black text-white tracking-tight">${n.district}</p>
+                            <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest">${n.category}</p>
+                        </div>
+                    </div>
+                    <p class="text-2xl font-black text-white">${n.urgency_score.toFixed(0)}</p>
+                </div>`; 
+            });
         }
 
         async function fetchSurveys() {
             const res = await fetch('/surveys/all');
             const data = await res.json();
             const body = document.getElementById('surveys-table-body'); body.innerHTML = '';
-            (data.surveys || []).forEach(s => { body.innerHTML += `<tr class="border-b border-white/5"><td class="px-8 py-4 font-bold">${s.district}</td><td class="px-4 py-4 uppercase text-xs font-bold text-gray-500">${s.category}</td><td class="px-4 py-4 font-mono font-black">${s.urgency_score.toFixed(1)}</td><td class="px-4 py-4">${s.affected_count}</td></tr>`; });
+            (data.surveys || []).forEach(s => { 
+                body.innerHTML += `<tr class="border-b border-slate-900/50 hover:bg-slate-900/30 transition-all group">
+                    <td class="px-10 py-6 font-bold text-white group-hover:text-teal-400">${s.district}</td>
+                    <td class="px-8 py-6 uppercase text-[10px] font-black text-slate-500 tracking-widest">${s.category}</td>
+                    <td class="px-8 py-6 text-center font-mono font-black text-teal-400">${s.urgency_score.toFixed(1)}</td>
+                    <td class="px-8 py-6 text-right text-slate-400 font-bold">${s.affected_count}</td>
+                </tr>`; 
+            });
         }
 
         async function fetchVolunteers() {
@@ -543,22 +671,15 @@ async def root():
             const data = await res.json();
             const grid = document.getElementById('volunteers-grid'); grid.innerHTML = '';
             (data.volunteers || []).forEach(v => { 
-                grid.innerHTML += `<div class="glass p-6 rounded-3xl space-y-4 border-white/5 relative">
-                    <button onclick="deleteVolunteer('${v.id}')" class="absolute top-4 right-4 transition-all w-8 h-8 bg-rose-500/10 text-rose-500 rounded-lg hover:bg-rose-500 hover:text-white flex items-center justify-center">
-                        <i class="fa-solid fa-trash-can text-xs"></i>
+                grid.innerHTML += `<div class="glass p-8 rounded-[40px] space-y-5 relative group hover:border-teal-500/50 transition-all">
+                    <button onclick="deleteVolunteer('${v.id}')" class="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-all w-10 h-10 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white flex items-center justify-center">
+                        <i class="fa-solid fa-trash-can text-sm"></i>
                     </button>
-                    <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center font-bold">${v.name[0]}</div>
-                    <div><p class="font-bold">${v.name}</p><p class="text-xs text-gray-500">${v.district}</p></div>
-                    <div class="flex flex-wrap gap-2">${v.skills.map(s => `<span class="text-[9px] px-2 py-1 bg-white/5 rounded-lg border border-white/10 text-gray-400 font-bold uppercase tracking-wider">${s}</span>`).join('')}</div>
+                    <div class="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center font-black text-teal-400 border border-slate-800 text-xl">${v.name[0]}</div>
+                    <div><p class="text-lg font-black text-white tracking-tight">${v.name}</p><p class="text-xs text-slate-500 font-medium">${v.district}</p></div>
+                    <div class="flex flex-wrap gap-2">${v.skills.map(s => `<span class="text-[9px] px-3 py-1.5 bg-slate-900 rounded-lg border border-slate-800 text-slate-400 font-black uppercase tracking-widest">${s}</span>`).join('')}</div>
                 </div>`; 
             });
-        }
-
-        async function deleteVolunteer(id) {
-            if (!confirm('Are you sure you want to remove this volunteer?')) return;
-            const res = await fetch(`/volunteers/${id}`, { method: 'DELETE' });
-            if (res.ok) { fetchData(); fetchVolunteers(); }
-            else { alert('Failed to delete'); }
         }
 
         async function runAIMatch() {
@@ -566,21 +687,29 @@ async def root():
             loader.classList.remove('hidden'); btn.classList.add('hidden'); results.innerHTML = '';
             try {
                 const res = await fetch('/volunteers/match', { method: 'POST' }); const data = await res.json();
-                setTimeout(() => { loader.classList.add('hidden'); btn.classList.remove('hidden'); (data.matches || []).forEach(m => { results.innerHTML += `<div class="glass p-8 rounded-[32px] border-l-4 border-indigo-500 space-y-4"><div class="flex justify-between items-start"><div><h4 class="text-lg font-bold">${m.volunteer_name}</h4><p class="text-xs text-indigo-400 font-bold uppercase">${m.need_category}</p></div><span class="text-[10px] px-3 py-1 bg-white/10 rounded-lg font-black uppercase">${m.priority}</span></div><p class="text-sm text-gray-400 italic">"${m.task_summary}"</p><div class="bg-indigo-500/10 p-4 rounded-xl text-xs text-gray-400"><i class="fa-solid fa-sparkles mr-2 text-indigo-400"></i>${m.match_reason}</div><div class="flex justify-between text-[10px] font-bold text-gray-600"><span>DISTANCE: ${m.distance || m.estimated_travel_km}KM</span><span>MATCH: ${(m.match_score * 100).toFixed(0)}%</span></div></div>`; }); }, 1000);
+                setTimeout(() => { 
+                    loader.classList.add('hidden'); btn.classList.remove('hidden'); 
+                    (data.matches || []).forEach(m => { 
+                        results.innerHTML += `<div class="glass p-10 rounded-[48px] border-l-8 border-teal-500 space-y-5 hover:scale-[1.02] transition-transform">
+                            <div class="flex justify-between items-start">
+                                <div><h4 class="text-xl font-black text-white tracking-tight">${m.volunteer_name}</h4><p class="text-[10px] text-teal-400 font-black uppercase tracking-widest mt-1">${m.need_category}</p></div>
+                                <span class="text-[10px] px-4 py-1.5 bg-slate-900 rounded-xl font-black uppercase text-white border border-slate-800">${m.priority}</span>
+                            </div>
+                            <p class="text-sm text-slate-400 font-medium leading-relaxed italic">"${m.task_summary}"</p>
+                            <div class="bg-teal-500/5 p-5 rounded-2xl text-xs text-slate-400 font-medium border border-teal-500/10 flex gap-3">
+                                <i class="fa-solid fa-brain text-teal-400 mt-1"></i>
+                                <span><b>Gemini Logic:</b> ${m.match_reason}</span>
+                            </div>
+                        </div>`; 
+                    }); 
+                }, 1200);
             } catch (e) { loader.classList.add('hidden'); btn.classList.remove('hidden'); }
         }
 
-        async function submitNewSurvey() {
-            const form = document.getElementById('survey-form'); const formData = new FormData(form);
-            const data = { location: { latitude: 18.5, longitude: 73.8 }, district: formData.get('district'), state: "Maharashtra", category: formData.get('category'), description: formData.get('description'), severity: 3, affected_count: 10, source: "digital_form" };
-            await fetch('/surveys/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-            alert('Success!'); form.reset(); switchTab('dashboard');
-        }
-
         window.onload = () => {
-            const savedUser = localStorage.getItem('vm_user');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
+            const saved = localStorage.getItem('vn_user_v2');
+            if (saved) {
+                currentUser = JSON.parse(saved);
                 document.getElementById('login-overlay').style.display = 'none';
                 document.getElementById('main-dashboard').style.display = 'flex';
                 initDashboard();
@@ -589,6 +718,7 @@ async def root():
     </script>
 </body>
 </html>"""
+
 
 
 

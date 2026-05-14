@@ -31,95 +31,126 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ─── Custom CSS ───────────────────────────────────────────────────────────────
+# ─── Custom CSS (Premium Design System) ───────────────────────────────────────
 
 st.markdown("""
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    /* Global Styles */
+    html, body, [class*="css"] {
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        background-color: #020617;
+        color: #f1f5f9;
+    }
+    
+    .stApp {
+        background: radial-gradient(circle at 0% 0%, #0f172a 0%, #020617 100%);
+    }
 
-html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
-}
+    /* Main Headers */
+    .main-header {
+        background: linear-gradient(135deg, #00BFA5 0%, #00897B 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 3.5rem;
+        font-weight: 800;
+        letter-spacing: -2px;
+        margin-bottom: 0;
+    }
+    
+    .tagline {
+        color: #94a3b8;
+        font-size: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        margin-top: -10px;
+        margin-bottom: 30px;
+    }
 
-.main-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-size: 2.8rem;
-    font-weight: 700;
-    margin-bottom: 0;
-}
+    /* Glass Cards */
+    .glass-card {
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 32px;
+        padding: 30px;
+        box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+        transition: all 0.3s ease;
+    }
+    .glass-card:hover {
+        border-color: rgba(0, 191, 165, 0.3);
+        transform: translateY(-4px);
+    }
 
-.tagline {
-    color: #a0aec0;
-    font-size: 1.1rem;
-    margin-top: -10px;
-    margin-bottom: 20px;
-}
+    /* Metric Styling Overrides */
+    [data-testid="stMetricValue"] {
+        font-size: 3rem !important;
+        font-weight: 800 !important;
+        color: #f8fafc !important;
+        letter-spacing: -1.5px;
+    }
+    [data-testid="stMetricLabel"] {
+        font-size: 0.8rem !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1.5px !important;
+        color: #cbd5e1 !important;
+    }
 
-.metric-card {
-    background: linear-gradient(145deg, #1e1e2e, #2a2a3e);
-    border-radius: 16px;
-    padding: 24px;
-    border: 1px solid rgba(255,255,255,0.08);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-}
+    /* Match Cards */
+    .match-card {
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(12px);
+        border-radius: 24px;
+        padding: 24px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-left: 6px solid #00BFA5;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .match-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+    }
+    .priority-high { border-left-color: #f43f5e; }
+    .priority-medium { border-left-color: #f59e0b; }
+    .priority-low { border-left-color: #3b82f6; }
 
-.metric-value {
-    font-size: 2.5rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
+    /* Button Styling */
+    .stButton > button {
+        background: linear-gradient(135deg, #00BFA5 0%, #00897B 100%);
+        color: white;
+        border: none;
+        border-radius: 16px;
+        padding: 14px 32px;
+        font-weight: 800;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        width: 100%;
+        box-shadow: 0 10px 25px -5px rgba(0, 191, 165, 0.4);
+    }
+    .stButton > button:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 15px 35px -10px rgba(0, 191, 165, 0.6);
+        color: white;
+    }
 
-.metric-label {
-    color: #a0aec0;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.match-card {
-    background: linear-gradient(145deg, #1a1a2e, #16213e);
-    border-radius: 12px;
-    padding: 20px;
-    margin: 10px 0;
-    border-left: 4px solid #667eea;
-    border: 1px solid rgba(255,255,255,0.06);
-}
-
-.priority-high { border-left-color: #E53E3E; }
-.priority-medium { border-left-color: #ED8936; }
-.priority-low { border-left-color: #38A169; }
-
-.category-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.stButton > button {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 24px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.stButton > button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-}
-
-div[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0f0c29, #302b63, #24243e);
-}
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background-color: #020617 !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Input Fields */
+    .stTextInput input, .stSelectbox div, .stTextArea textarea {
+        background-color: rgba(15, 23, 42, 0.5) !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -166,26 +197,26 @@ def api_post(endpoint, data=None, files=None):
 # ─── Sidebar ──────────────────────────────────────────────────────────────────
 
 with st.sidebar:
-    st.markdown('<h1 class="main-header">📍 Volunite</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">Volunite</h1>', unsafe_allow_html=True)
     st.markdown('<p class="tagline">Unite. Serve. Impact.</p>', unsafe_allow_html=True)
     st.divider()
 
     page = st.radio(
-        "Navigate",
-        ["📊 Dashboard", "📝 Submit Survey", "📸 OCR Upload", "🤖 Volunteer Matching"],
+        "Navigation",
+        ["📊 Analytics Dashboard", "📝 Submit Field Data", "📸 AI-OCR Intake", "🪄 Smart Intelligence"],
         label_visibility="collapsed",
     )
 
     st.divider()
-    st.caption("Built for Google Solution Challenge 2026")
-    st.caption("Build with AI 🚀")
+    st.caption("Google Solution Challenge 2026")
+    st.caption("Build with AI — Premium Intelligence")
 
 
 # ─── Dashboard Page ──────────────────────────────────────────────────────────
 
-if page == "📊 Dashboard":
-    st.markdown("## 📊 Volunite Community Dashboard")
-    st.markdown("Real-time intelligence on community needs across Maharashtra")
+if page == "📊 Analytics Dashboard":
+    st.markdown('<h2 style="font-weight:800; letter-spacing:-1px;">Operational Intelligence</h2>', unsafe_allow_html=True)
+    st.markdown('<p style="color:#64748b; font-weight:500;">Real-time community needs across Maharashtra</p>', unsafe_allow_html=True)
     st.markdown("")
 
     # Metrics Row
@@ -271,9 +302,9 @@ if page == "📊 Dashboard":
 
 # ─── Submit Survey Page ──────────────────────────────────────────────────────
 
-elif page == "📝 Submit Survey":
-    st.markdown("## 📝 Submit New Survey")
-    st.markdown("Report a community need from the field")
+elif page == "📝 Submit Field Data":
+    st.markdown('<h2 style="font-weight:800; letter-spacing:-1px;">Direct Intake</h2>', unsafe_allow_html=True)
+    st.markdown('<p style="color:#64748b; font-weight:500;">Report new community requirements directly to the cloud</p>', unsafe_allow_html=True)
     st.markdown("")
 
     with st.form("survey_form", clear_on_submit=True):
@@ -367,9 +398,9 @@ elif page == "📸 OCR Upload":
 
 # ─── Volunteer Matching Page ─────────────────────────────────────────────────
 
-elif page == "🤖 Volunteer Matching":
-    st.markdown("## 🤖 AI-Powered Volunteer Matching")
-    st.markdown("Let Gemini AI find the best volunteer for each urgent need")
+elif page == "🪄 Smart Intelligence":
+    st.markdown('<h2 style="font-weight:800; letter-spacing:-1px;">AI Matchmaking</h2>', unsafe_allow_html=True)
+    st.markdown('<p style="color:#64748b; font-weight:500;">Gemini-powered task optimization for field responders</p>', unsafe_allow_html=True)
     st.markdown("")
 
     # Show available volunteers

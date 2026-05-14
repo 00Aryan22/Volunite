@@ -35,26 +35,40 @@ class VolunteerMapApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(
             seedColor: const Color(0xFF00BFA5),
             primary: const Color(0xFF00BFA5),
+            secondary: const Color(0xFF006064),
+            tertiary: const Color(0xFFF43F5E),
+            surface: Colors.white,
           ),
-          textTheme: GoogleFonts.poppinsTextTheme(),
+          textTheme: GoogleFonts.plusJakartaSansTextTheme(),
           appBarTheme: AppBarTheme(
-            backgroundColor: Colors.white,
-            foregroundColor: const Color(0xFF006064),
-            elevation: 0,
             centerTitle: false,
-            titleTextStyle: GoogleFonts.poppins(
-              color: const Color(0xFF006064),
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            foregroundColor: const Color(0xFF0F172A),
+            titleTextStyle: GoogleFonts.plusJakartaSans(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF0F172A),
+              letterSpacing: -1,
             ),
           ),
-        ),
-        darkTheme: ThemeData.dark(useMaterial3: true).copyWith(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF00897B),
-            brightness: Brightness.dark,
+          cardTheme: CardTheme(
+            elevation: 8,
+            shadowColor: Colors.black12,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            color: Colors.white,
           ),
-          textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
+        ),
+        darkTheme: ThemeData(
+          useMaterial3: true,
+          brightness: Brightness.dark,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF00BFA5),
+            brightness: Brightness.dark,
+            primary: const Color(0xFF00BFA5),
+            surface: const Color(0xFF0F172A),
+          ),
+          textTheme: GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme),
         ),
         themeMode: ThemeMode.system,
         routes: {
